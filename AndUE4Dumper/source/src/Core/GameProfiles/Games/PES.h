@@ -12,9 +12,9 @@ public:
 
     virtual bool ArchSupprted() const override
     {
-        auto e_machine = GetBaseInfo().ehdr.e_machine;
-        // only arm64
-        return e_machine == EM_AARCH64;
+        auto e_machine = GetUE4ELF().header().e_machine;
+        // arm & arm64
+        return e_machine == EM_AARCH64 || e_machine == EM_ARM;
     }
 
     std::string GetAppName() const override
@@ -34,11 +34,10 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        std::string hex = "08 00 00 91 E1 03 00 AA E0 03 08 AA E2 03 1F 2A";
-        std::string mask = "x??xxx?xxxxxxxxx";
+        std::string ida_pattern = "08 ? ? 91 E1 03 ? AA E0 03 08 AA E2 03 1F 2A";
         int step = -4;
 
-        uintptr_t insn_address = findPattern(PATTERN_MAP_TYPE::MAP_RXP, hex, mask, step);
+        uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
         if(insn_address == 0)
         {
             LOGE("GUObjectArray pattern failed.");
@@ -51,8 +50,8 @@ public:
         uintptr_t page_off = INSN_PAGE_OFFSET(insn_address);
 
         uint32_t adrp_insn = 0, add_insn = 0;
-        PMemory::vm_rpm_ptr((void *)(insn_address), &adrp_insn, sizeof(uint32_t));
-        PMemory::vm_rpm_ptr((void *)(insn_address + sizeof(uint32_t)), &add_insn, sizeof(uint32_t));
+        kMgr.readMem((insn_address), &adrp_insn, sizeof(uint32_t));
+        kMgr.readMem((insn_address + sizeof(uint32_t)), &add_insn, sizeof(uint32_t));
 
         if (adrp_insn == 0 || add_insn == 0)
             return 0;
@@ -65,17 +64,14 @@ public:
             return 0;
 
         return (page_off + adrp_pc_rel + add_imm12);
-
-        //return GetBaseInfo().map.startAddress + 0x0000000;
     }
 
     uintptr_t GetNamesPtr() const override
     {
-        std::string hex = "F4 4F 01 A9 FD 7B 02 A9 FD 83 00 91 00 00 00 00 A8 02 00 39";
-        std::string mask = "xxxxxxxxxx?x????xx?x";
+        std::string ida_pattern = "F4 4F 01 A9 FD 7B 02 A9 FD 83 ? 91 ? ? ? ? A8 02 ? 39";
         int step = 0x24;
 
-        uintptr_t insn_address = findPattern(PATTERN_MAP_TYPE::MAP_RXP, hex, mask, step);
+        uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
         if (insn_address == 0)
         {
             LOGE("NamePoolData pattern failed.");
@@ -88,8 +84,8 @@ public:
         uintptr_t page_off = INSN_PAGE_OFFSET(insn_address);
 
         uint32_t adrp_insn = 0, add_insn = 0;
-        PMemory::vm_rpm_ptr((void *)(insn_address), &adrp_insn, sizeof(uint32_t));
-        PMemory::vm_rpm_ptr((void *)(insn_address + sizeof(uint32_t)), &add_insn, sizeof(uint32_t));
+        kMgr.readMem((insn_address), &adrp_insn, sizeof(uint32_t));
+        kMgr.readMem((insn_address + sizeof(uint32_t)), &add_insn, sizeof(uint32_t));
 
         if (adrp_insn == 0 || add_insn == 0)
             return 0;
@@ -102,8 +98,6 @@ public:
             return 0;
 
         return (page_off + adrp_pc_rel + add_imm12);
-
-        //return GetBaseInfo().map.startAddress + 0x0000000;
     }
 
     UE_Offsets *GetOffsets() const override

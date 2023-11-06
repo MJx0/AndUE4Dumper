@@ -7,7 +7,17 @@
 
 #include "ioutils.h"
 
-using namespace PMemory;
+template <typename T>
+T vm_rpm_ptr(void* address)
+{
+    T buffer {};
+    kMgr.readMem(uintptr_t(address), &buffer, sizeof(T));
+    return buffer;
+}
+static bool vm_rpm_ptr(void *address, void *result, size_t len)
+{
+    return kMgr.readMem(uintptr_t(address), result, len) == len;
+}
 
 namespace Profile
 {
@@ -66,7 +76,7 @@ std::string GetNameByID(int32 id)
             return name;
         }*/
 
-        name = vm_rpm_str((void *)(FNameEntryPtr + Profile::offsets.FNameEntry.Name), Profile::offsets.FNameMaxSize);
+        name = kMgr.readMemStr(uintptr_t(FNameEntryPtr + Profile::offsets.FNameEntry.Name), Profile::offsets.FNameMaxSize);
     }
     else
     {
@@ -93,7 +103,7 @@ std::string GetNameByID(int32 id)
         if (len <= 0 && len > Profile::offsets.FNameMaxSize)
             return name;
 
-        name = vm_rpm_str((void *)(chunck + chunck_offset + Profile::offsets.FNameEntry23.HeaderSize), len);
+        name = kMgr.readMemStr(uintptr_t(chunck + chunck_offset + Profile::offsets.FNameEntry23.HeaderSize), len);
     }
 
     namesCachedMap[id] = name;
@@ -925,7 +935,7 @@ UE_UClass UE_UInt32Property::StaticClass()
     return obj;
 }
 
-std::string UE_UUInt64Property::GetTypeStr() const { return "uint64"; }
+std::string UE_UUInt64Property::GetTypeStr() const { return "uint64_t"; }
 
 UE_UClass UE_UUInt64Property::StaticClass()
 {
@@ -1707,11 +1717,11 @@ void UE_UPackage::GenerateEnum(UE_UEnum object, std::vector<Enum> &arr)
     // I didn't see int16 yet, so I assume the engine generates only int32 and uint8:
     if (max > 256)
     {
-        type = " : int32"; // I assume if enum has a negative value it is int32
+        type = " : int32_t"; // I assume if enum has a negative value it is int32
     }
     else
     {
-        type = " : uint8";
+        type = " : uint8_t";
     }
 
     e.CppName = "enum class " + object.GetName() + type;
@@ -1788,108 +1798,98 @@ void UE_UPackage::Process()
     }
 }
 
-bool UE_UPackage::Save(const char *fulldump_dir, const char *dumpheaders_dir)
+bool UE_UPackage::Save(const std::string &dir, const std::string &headers_dir)
 {
-    if (!fulldump_dir && !dumpheaders_dir)
-        return false;
+	if (dir.empty() && headers_dir.empty())
+		return false;
 
-    if (!(Classes.size() || Structures.size() || Enums.size()))
-    {
-        return false;
-    }
+	if (!Classes.size() && !Structures.size() && !Enums.size())
+		return false;
 
     // make safe to use as a file name
     std::string packageName = ioutils::replace_specials(GetObject().GetName(), '_');
 
-    File fulldump_file;
+	File fulldump_file(dir + "/FullDump.hpp", "a");
+	if (fulldump_file.ok())
+	{
+		fmt::print(fulldump_file, "// {} Dumping: [ Enums: {} | Structs: {} | Classes: {} ]\n\n", packageName, Enums.size(), Structures.size(), Classes.size());
+	}
 
-    if (fulldump_dir)
-    {
-        std::string fulldump_path = fulldump_dir;
-        fulldump_path += "/FullDump.hpp";
-        fulldump_file.open(fulldump_path.c_str(), "a");
-    }
-
-    if (fulldump_file)
-    {
-        fmt::print(fulldump_file, "// {} Dump: [ Enums: {} | Structs: {} | Classes: {} ]\n\n", packageName, Enums.size(), Structures.size(), Classes.size());
-    }
-
-    if (Enums.size())
-    {
-        if (dumpheaders_dir)
-        {
-            std::string file_path = dumpheaders_dir;
+	if (Enums.size())
+	{
+		if (!headers_dir.empty())
+		{
+			std::string file_path = headers_dir;
             file_path += "/";
-            file_path += packageName;
-            file_path += "_enums.hpp";
-            File file(file_path.c_str(), "w");
-            if (!file)
-                return false;
+			file_path += packageName;
+			file_path += "_enums.hpp";
+			File file(file_path, "w");
+			if (file.ok())
+            {
+                fmt::print(file, "#pragma once\n\n#include <cstdio>\n#include <string>\n#include <cstdint>\n\n");
+                UE_UPackage::SaveEnum(Enums, file);
+            }
+		}
 
-            fmt::print(file, "#pragma once\n\n#include <cstdio>\n#include <string>\n#include <cstdint>\n\n");
-            UE_UPackage::SaveEnum(Enums, file);
-        }
+		if (fulldump_file.ok())
+		{
+			UE_UPackage::SaveEnum(Enums, fulldump_file);
+			fmt::print(fulldump_file, "\n\n");
+		}
+	}
 
-        if (fulldump_file)
-        {
-            UE_UPackage::SaveEnum(Enums, fulldump_file);
-            fmt::print(fulldump_file, "\n\n");
-        }
-    }
-
-    if (Structures.size())
-    {
-        if (dumpheaders_dir)
-        {
-            std::string file_path = dumpheaders_dir;
+	if (Structures.size())
+	{
+		if (!headers_dir.empty())
+		{
+			std::string file_path = headers_dir;
             file_path += "/";
-            file_path += packageName;
-            file_path += "_structs.hpp";
-            File file(file_path.c_str(), "w");
-            if (!file)
-                return false;
+			file_path += packageName;
+			file_path += "_structs.hpp";
+			File file(file_path.c_str(), "w");
+			if (file.ok())
+            {
+                fmt::print(file, "#pragma once\n\n#include <cstdio>\n#include <string>\n#include <cstdint>\n\n");
+                UE_UPackage::SaveStruct(Structures, file);
+            }	
+		}
 
-            fmt::print(file, "#pragma once\n\n#include <cstdio>\n#include <string>\n#include <cstdint>\n\n");
-            UE_UPackage::SaveStruct(Structures, file);
-        }
+		if (fulldump_file.ok())
+		{
+			UE_UPackage::SaveStruct(Structures, fulldump_file);
+			fmt::print(fulldump_file, "\n\n");
+		}
+	}
 
-        if (fulldump_file)
-        {
-            UE_UPackage::SaveStruct(Structures, fulldump_file);
-            fmt::print(fulldump_file, "\n\n");
-        }
-    }
-
-    if (Classes.size())
-    {
-        if (dumpheaders_dir)
-        {
-            std::string file_path = dumpheaders_dir;
+	if (Classes.size())
+	{
+		if (!headers_dir.empty())
+		{
+			std::string file_path = headers_dir;
             file_path += "/";
-            file_path += packageName;
-            file_path += "_classes.hpp";
-            File file(file_path.c_str(), "w");
-            if (!file)
-                return false;
+			file_path += packageName;
+			file_path += "_classes.hpp";
+			File file(file_path.c_str(), "w");
+			if (file.ok())
+            {
+                fmt::print(file, "#pragma once\n\n#include <cstdio>\n#include <string>\n#include <cstdint>\n\n");
+                UE_UPackage::SaveStruct(Classes, file);
+            }
+		}
 
-            fmt::print(file, "#pragma once\n\n#include <cstdio>\n#include <string>\n#include <cstdint>\n\n");
-            UE_UPackage::SaveStruct(Classes, file);
-        }
+		if (fulldump_file.ok())
+		{
+			UE_UPackage::SaveStruct(Classes, fulldump_file);
+			fmt::print(fulldump_file, "\n\n");
+		}
+	}
 
-        if (fulldump_file)
-        {
-            UE_UPackage::SaveStruct(Classes, fulldump_file);
-            fmt::print(fulldump_file, "\n\n");
-        }
-    }
+	if (fulldump_file.ok())
+	{
+		fmt::print(fulldump_file, "\n\n");
+	}
 
-    if (fulldump_file)
-    {
-        fmt::print(fulldump_file, "\n\n");
-    }
-
-    return true;
+	return true;
 }
 
 UE_UObject UE_UPackage::GetObject() const { return UE_UObject(Package->first); }

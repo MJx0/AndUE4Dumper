@@ -21,10 +21,4 @@ namespace ioutils
     void delete_directory(const std::string &directory);
 
     int path_is_directory(const std::string &path);
-
-    size_t copy_file(const std::string &src, const std::string &dst);
-
-    size_t pread_fully(int fd, void *buffer, int64_t offset, size_t numBytes);
-
-    size_t pwrite_fully(int fd, void *buffer, int64_t offset, size_t numBytes);
 }

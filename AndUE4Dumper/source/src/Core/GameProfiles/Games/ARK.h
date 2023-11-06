@@ -12,7 +12,7 @@ public:
 
     virtual bool ArchSupprted() const override
     {
-        auto e_machine = GetBaseInfo().ehdr.e_machine;
+        auto e_machine = GetUE4ELF().header().e_machine;
         // arm & arm64
         return e_machine == EM_AARCH64 || e_machine == EM_ARM;
     }
@@ -34,28 +34,27 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        uintptr_t guobjectarray = findSymbol("GUObjectArray");
+        uintptr_t guobjectarray = GetUE4ELF().findSymbol("GUObjectArray");
         if(guobjectarray == 0)
         {
             LOGE("Failed to find GUObjectArray symbol.");
             return 0;
         }
         return guobjectarray;
-        //return GetBaseInfo().map.startAddress + 0x0000000;
     }
 
     uintptr_t GetNamesPtr() const override
     {
         // GFNameTableForDebuggerVisualizers_MT = &GNames
-        uintptr_t name_table_p = findSymbol("GFNameTableForDebuggerVisualizers_MT");
+        uintptr_t name_table_p = GetUE4ELF().findSymbol("GFNameTableForDebuggerVisualizers_MT");
         if (name_table_p == 0)
         {
             LOGE("Failed to find GFNameTableForDebuggerVisualizers_MT symbol.");
             return 0;
         }
-        return PMemory::vm_rpm_ptr<uintptr_t>((void *)name_table_p);
 
-        // return GetBaseInfo().map.startAddress + 0x0000000;
+        kMgr.readMem(name_table_p, &name_table_p, sizeof(uintptr_t));
+        return name_table_p;
     }
 
     UE_Offsets *GetOffsets() const override

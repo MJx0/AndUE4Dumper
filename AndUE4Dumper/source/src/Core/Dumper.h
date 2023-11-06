@@ -30,21 +30,7 @@ namespace Dumper
         UE_DS_ERROR_EMPTY_PACKAGES = 13,
     };
 
-    struct DumpArgs
-    {
-        std::string dump_dir;
-        std::string dump_headers_dir;
-
-        bool dump_lib;
-
-        bool dump_objects;
-        bool dump_full;
-        bool dump_headers;
-
-        bool gen_functions_script;
-    };
-
-    DumpStatus Dump(DumpArgs *args, IGameProfile *profile);
+    DumpStatus Dump(const std::string &dir, const std::string headers_dir,  bool dump_lib, IGameProfile *profile);
 
     std::string DumpStatusToStr(DumpStatus ds);
 

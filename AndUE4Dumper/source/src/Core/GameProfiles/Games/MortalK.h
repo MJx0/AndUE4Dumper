@@ -12,8 +12,8 @@ public:
 
     virtual bool ArchSupprted() const override
     {
-        auto e_machine = GetBaseInfo().ehdr.e_machine;
-        // arm & am64
+        auto e_machine = GetUE4ELF().header().e_machine;
+        // arm & arm64
         return e_machine == EM_AARCH64 || e_machine == EM_ARM;
     }
 
@@ -27,84 +27,6 @@ public:
         return { "com.wb.goog.mkx" };
     }
 
-    std::vector<ProcMap> virtual GetMaps() const override
-    {
-        static std::vector<ProcMap> ue4Maps = IGameProfile::GetMaps();
-        static bool once = false;
-
-        // filter out ue4 lib from split apk by checking elf load size > 80MB
-        if (!once && ue4Maps.empty())
-        {
-            LOGI("Scanning for UE4 lib in split apk...");
-            // just an estimated size to filter out the ue4 lib from apk maps
-            const size_t libUE4EstimatedSize = 80000000;
-#ifdef _EXECUTABLE
-            auto allMaps = KittyMemory::getAllMapsEx();
-#else
-            auto allMaps = KittyMemory::getAllMaps();
-#endif
-            for (auto &it : allMaps)
-            {
-                if (!ioutils::file_path_contains(it.pathname, PMemory::get_target_pkg()))
-                    continue;
-                if (!ioutils::file_path_contains(it.pathname, "/split_config") && ioutils::get_filename(it.pathname) != "base.apk")
-                    continue;
-                if (ioutils::get_file_extension(it.pathname) != "apk")
-                    continue;
-
-                union
-                {
-                    char magic[4];
-                    ElfW(Ehdr) ehdr;
-                } elf;
-                if (!(it.readable && PMemory::vm_rpm_ptr((void *)(it.startAddress), &elf, sizeof(elf)) && VERIFY_ELF_HEADER(elf.magic)))
-                    continue;
-
-                if (elf_utils::get_elfSize(elf.ehdr, it.startAddress) >= libUE4EstimatedSize)
-                {
-                    ue4Maps.push_back(it);
-                    break;
-                }
-            }
-
-            // didn't find any
-            if (!ue4Maps.size())
-            {
-                LOGE("Couldn't find UE4 lib within all aplit apk maps.");
-                once = true;
-                return ue4Maps;
-            }
-
-            // get the rest of maps
-            bool processing = false;
-            for (auto &it : allMaps)
-            {
-                auto back = ue4Maps.back();
-                if ((it.inode == ue4Maps.front().inode || back.isUnknown()) && it.startAddress == back.endAddress)
-                {
-                    processing = true;
-                    ue4Maps.push_back(it);
-                    continue;
-                }
-
-                // ---p map
-                if (it.isUnknown() && it.startAddress == back.endAddress && it.is_private && !it.writeable && !it.readable && !it.executable)
-                {
-                    processing = true;
-                    ue4Maps.push_back(it);
-                    continue;
-                }
-
-                if (processing)
-                    break;
-            }
-
-            once = true;
-        }
-
-        return ue4Maps;
-    }
-
     bool IsUsingFNamePool() const override
     {
         return true;
@@ -112,30 +34,27 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        uintptr_t guobjectarray = findSymbol("GUObjectArray");
+        uintptr_t guobjectarray = GetUE4ELF().findSymbol("GUObjectArray");
         if(guobjectarray == 0)
         {
             LOGE("Failed to find GUObjectArray symbol.");
             return 0;
         }
         return guobjectarray;
-
-        //return GetBaseInfo().map.startAddress + 0x0000000;
     }
 
     uintptr_t GetNamesPtr() const override
     {
         // GNameBlocksDebug = &NamePoolData + Blocks offset
-        uintptr_t blocks_p = findSymbol("GNameBlocksDebug");
+        uintptr_t blocks_p = GetUE4ELF().findSymbol("GNameBlocksDebug");
         if (blocks_p == 0)
         {
             LOGE("Failed to find GNameBlocksDebug symbol.");
             return 0;
         }
-        blocks_p = PMemory::vm_rpm_ptr<uintptr_t>((void *)blocks_p);
-        return ((blocks_p == 0) ? 0 : (blocks_p - GetOffsets()->FNamePoolBlocks));
 
-        // return GetBaseInfo().map.startAddress + 0x0000000;
+        kMgr.readMem(blocks_p, &blocks_p, sizeof(uintptr_t));
+        return ((blocks_p == 0) ? 0 : (blocks_p - GetOffsets()->FNamePoolBlocks));
     }
 
     UE_Offsets *GetOffsets() const override

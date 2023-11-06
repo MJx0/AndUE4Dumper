@@ -6,10 +6,8 @@
 using json = nlohmann::json;
 
 #include "wrappers.h"
-
-#include <KittyMemory/KittyMemory.h>
-#include <KittyMemory/KittyScanner.h>
-#include <KittyMemory/KittyUtils.h>
+#include "ioutils.h"
+#include "memory.h"
 
 #include <Logger.h>
 
@@ -46,7 +44,7 @@ namespace Dumper
 
 	DumpStatus InitProfile(IGameProfile *profile)
 	{
-		Profile::BaseAddress = profile->GetBaseInfo().map.startAddress;
+		Profile::BaseAddress = profile->GetUE4ELF().base();
 
 		UE_Offsets *pOffsets = profile->GetOffsets();
 		if (!pOffsets)
@@ -81,39 +79,24 @@ namespace Dumper
 
 		Profile::ObjObjectsPtr = GUObjectsArrayPtr + Profile::offsets.FUObjectArray.ObjObjects;
 
-		if (!PMemory::vm_rpm_ptr((void *)Profile::ObjObjectsPtr, &Profile::ObjObjects, sizeof(TUObjectArray)))
+		if (!kMgr.readMem(Profile::ObjObjectsPtr, &Profile::ObjObjects, sizeof(TUObjectArray)))
 			return UE_DS_ERROR_INIT_OBJOBJECTS;
 
 		return UE_DS_NONE;
 	}
 
-	DumpStatus Dump(DumpArgs *args, IGameProfile *profile)
+	DumpStatus Dump(const std::string &dir, const std::string headers_dir,  bool dump_lib, IGameProfile *profile)
 	{
 		LOGI("Reading Target UE4 Library Info...");
 
-		auto ue4Maps = profile->GetMaps();
-		if (ue4Maps.empty())
+		auto ue4_elf = profile->GetUE4ELF();
+		if (!ue4_elf.isValid())
 		{
-			LOGE("Couldn't find UE4 library in target process maps.");
+			LOGE("Couldn't find a valid UE4 ELF in target process maps.");
 			return UE_DS_ERROR_LIB_NOT_FOUND;
 		}
 
-		auto baseInfo = profile->GetBaseInfo();
-
-		if (baseInfo.map.startAddress == 0)
-		{
-			LOGE("Couldn't get base info. check dumper and game architecture compatibility.");
-			return UE_DS_ERROR_LIB_INVALID_BASE;
-		}
-
-		if (!VERIFY_ELF_HEADER(baseInfo.magic))
-		{
-			auto base_name = baseInfo.map.pathname;
-			LOGE("Base of (%s) is not a valid ELF header.", base_name.empty() ? "" : base_name.c_str());
-			return UE_DS_ERROR_INVALID_ELF;
-		}
-
-		switch (baseInfo.ehdr.e_ident[4]) // EI_CLASS
+		switch (ue4_elf.header().e_ident[4]) // EI_CLASS
 		{
 		case 1: // ELFCLASS32
 			if (sizeof(void *) != 4)
@@ -139,19 +122,19 @@ namespace Dumper
 
 		if (!profile->ArchSupprted())
 		{
-			LOGE("Architecture ( 0x%x ) is not supported for this game.", baseInfo.ehdr.e_machine);
+			LOGE("Architecture ( 0x%x ) is not supported for this game.", ue4_elf.header().e_machine);
 			return UE_DS_ARCH_NOT_SUPPORTED;
 		}
 
-		LOGI("e_machine: 0x%x", baseInfo.ehdr.e_machine);
-		LOGI("Library: %s", baseInfo.map.pathname.c_str());
-		LOGI("BaseAddress: %p", (void *)baseInfo.map.startAddress);
+		LOGI("e_machine: 0x%x", ue4_elf.header().e_machine);
+		LOGI("Library: %s", ue4_elf.filePath().c_str());
+		LOGI("BaseAddress: %p", (void *)ue4_elf.base());
 		LOGI("==========================");
 
-		if (args->dump_lib)
+		if (dump_lib)
 		{
 			LOGI("Dumping libUE4.so from memory...");
-			profile->DumpLibrary();
+			LOGI("Dumping lib: %s.", kMgr.dumpMemELF(ue4_elf.base(), dir + "libUE4_dump.so") ? "success" : "failed");
 			LOGI("==========================");
 		}
 
@@ -178,36 +161,19 @@ namespace Dumper
 
 		LOGI("Dumping, please wait...");
 
-		File objfile;
-		if (args->dump_objects)
+		std::string objfile_path = dir + "/objects_dump.txt";
+		File objfile(objfile_path, "w");
+		if (!objfile.ok())
 		{
-			std::string objfile_path = args->dump_dir;
-			objfile_path += "/objects_dump.txt";
-			objfile.open(objfile_path.c_str(), "w");
-			if (!objfile)
-			{
-				LOGE("Couldn't create file [\"%s\"]", objfile_path.c_str());
-				return UE_DS_ERROR_IO_OPERATION;
-			}
-		}
+			LOGE("Couldn't create file [\"%s\"]", objfile_path.c_str());
+			return UE_DS_ERROR_IO_OPERATION;
+		}	
 
 		std::function<void(UE_UObject)> objdump_callback = nullptr;
-		if (args->dump_objects && objfile)
+		objdump_callback = [&objfile](UE_UObject object)
 		{
-			objdump_callback = [&objfile](UE_UObject object)
-			{
-				fmt::print(objfile, "{}\n", object.GetName());
-			};
-		}
-
-		if (!args->dump_full && !args->dump_headers && !args->gen_functions_script)
-		{
-			if (objdump_callback)
-			{
-				Profile::ObjObjects.ForEachObject(objdump_callback);
-			}
-			return UE_DS_SUCCESS;
-		}
+			fmt::print(objfile, "{}\n", object.GetName());
+		};
 
 		std::unordered_map<uint8 *, std::vector<UE_UObject>> packages;
 		std::function<void(UE_UObject)> callback;
@@ -242,7 +208,7 @@ namespace Dumper
 		for (UE_UPackage package : packages)
 		{
 			package.Process();
-			if (package.Save(args->dump_full ? args->dump_dir.c_str() : nullptr, args->dump_headers ? args->dump_headers_dir.c_str() : nullptr))
+			if (package.Save(dir, headers_dir))
 			{
 				packages_saved++;
 				classes_saved += package.Classes.size();
@@ -307,7 +273,7 @@ namespace Dumper
 			LOGI("==========================");
 		}
 
-		if (args->gen_functions_script && JsonGen::idaFunctions.size())
+		if (JsonGen::idaFunctions.size())
 		{
 			LOGI("Generating json...");
 			LOGI("Functions: %zu", JsonGen::idaFunctions.size());
@@ -317,10 +283,9 @@ namespace Dumper
 				js["Functions"].push_back(idf);
 			}
 
-			std::string jsfile_path = args->dump_dir;
-			jsfile_path += "/script.json";
+			std::string jsfile_path = dir + "/script.json";
 			File jsfile(jsfile_path.c_str(), "w");
-			if (!jsfile)
+			if (!jsfile.ok())
 			{
 				LOGE("Couldn't create file [\"%s\"]", jsfile_path.c_str());
 				return UE_DS_ERROR_IO_OPERATION;

@@ -12,7 +12,7 @@ public:
 
     virtual bool ArchSupprted() const override
     {
-        auto e_machine = GetBaseInfo().ehdr.e_machine;
+        auto e_machine = GetUE4ELF().header().e_machine;
         // arm & arm64
         return e_machine == EM_AARCH64 || e_machine == EM_ARM;
     }
@@ -46,29 +46,26 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        //return GetBaseInfo().map.startAddress + 0x0000000;
-
-        auto e_machine = GetBaseInfo().ehdr.e_machine;
+        auto e_machine = GetUE4ELF().header().e_machine;
         // arm patterns
         if (e_machine == EM_ARM)
         {
-            std::string hex = "BC109FE501108FE0082091E5";
-            std::string mask(hex.length() / 2, 'x');
-            uintptr_t insn_address = findPattern(PATTERN_MAP_TYPE::MAP_RXP, hex, mask, 0);
+            std::string ida_pattern = "BC109FE501108FE0082091E5";
+            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, 0);
             if (insn_address != 0)
             {
                 uintptr_t PC = insn_address + 8, PC_ldr = 0, R1 = 0, R2 = 4;
 
-                PMemory::vm_rpm_ptr((void *)(insn_address), &PC_ldr, sizeof(uintptr_t));
+                kMgr.readMem((insn_address), &PC_ldr, sizeof(uintptr_t));
                 PC_ldr = KittyArm::decode_ldr_literal(PC_ldr);
 
-                PMemory::vm_rpm_ptr((void *)(PC + PC_ldr), &R1, sizeof(uintptr_t));
+                kMgr.readMem((PC + PC_ldr), &R1, sizeof(uintptr_t));
 
                 return (PC + R1 + R2);
             }
 
             // alternative .bss pattern
-            insn_address = findPattern(PATTERN_MAP_TYPE::MAP_BSS, "010000000100F049020000000000", "xx??xxxxxxxxxx", -2);
+            insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BSS, "0100??0100F049020000000000", -2);
             if (insn_address == 0)
             {
                 LOGE("GUObjectArray pattern failed.");
@@ -79,11 +76,11 @@ public:
         // arm64 patterns
         else if (e_machine == EM_AARCH64)
         {
-            std::string hex = "12 40 B9 00 3E 40 B9 00 00 00 6B 00 00 00 54 00 00 00 00 00 00 00 91";
+            std::string ida_pattern = "12 40 B9 00 3E 40 B9 00 00 00 6B 00 00 00 54 00 00 00 00 00 00 00 91";
             std::string mask = "xxx?xxx???x???x???????x";
             int step = 0xF;
 
-            uintptr_t insn_address = findPattern(PATTERN_MAP_TYPE::MAP_RXP, hex, mask, step);
+            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
             if(insn_address == 0)
             {
                 LOGE("GUObjectArray pattern failed.");
@@ -96,8 +93,8 @@ public:
             uintptr_t page_off = INSN_PAGE_OFFSET(insn_address);
 
             uint32_t adrp_insn = 0, add_insn = 0;
-            PMemory::vm_rpm_ptr((void *)(insn_address), &adrp_insn, sizeof(uint32_t));
-            PMemory::vm_rpm_ptr((void *)(insn_address + sizeof(uint32_t)), &add_insn, sizeof(uint32_t));
+            kMgr.readMem((insn_address), &adrp_insn, sizeof(uint32_t));
+            kMgr.readMem((insn_address + sizeof(uint32_t)), &add_insn, sizeof(uint32_t));
 
             if (adrp_insn == 0 || add_insn == 0)
                 return 0;
@@ -117,45 +114,42 @@ public:
 
     uintptr_t GetNamesPtr() const override
     {
-        // uintptr_t enc_names = GetBaseInfo().map.startAddress + 0x0000000;
         uintptr_t enc_names = 0;
 
-        auto e_machine = GetBaseInfo().ehdr.e_machine;
+        auto e_machine = GetUE4ELF().header().e_machine;
         // arm patterns
         if (e_machine == EM_ARM)
         {
-            std::string hex = "E0019FE500008FE0307090E5";
-            std::string mask(hex.length() / 2, 'x');
-            uintptr_t insn_address = findPattern(PATTERN_MAP_TYPE::MAP_RXP, hex, mask, 0);
+            std::string ida_pattern = "E0019FE500008FE0307090E5";
+            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, 0);
             if (insn_address != 0)
             {
                 uintptr_t PC = insn_address + 0x8, PC_ldr = 0, R1 = 0, R2 = 0x30;
 
-                PMemory::vm_rpm_ptr((void *)(insn_address), &PC_ldr, sizeof(uintptr_t));
+                kMgr.readMem((insn_address), &PC_ldr, sizeof(uintptr_t));
                 PC_ldr = KittyArm::decode_ldr_literal(PC_ldr);
 
-                PMemory::vm_rpm_ptr((void *)(PC + PC_ldr), &R1, sizeof(uintptr_t));
+                kMgr.readMem((PC + PC_ldr), &R1, sizeof(uintptr_t));
 
                 enc_names = (PC + R1 + R2 + 4);
             }
             else
             {
                 // alternative .bss pattern
-                hex = "00E432D8B00D4F891FB77ECFACA24AFD362843C6E1534D2CA2868E6CA38CBD1764";
-                mask = std::string(hex.length() / 2, 'x');
+                ida_pattern = "00E432D8B00D4F891FB77ECFACA24AFD362843C6E1534D2CA2868E6CA38CBD1764";
                 int step = -0xF;
                 int skip = 1;
-                enc_names = findPattern(PATTERN_MAP_TYPE::MAP_BSS, hex, mask, step, skip);
+                enc_names = findIdaPattern(PATTERN_MAP_TYPE::MAP_BSS, ida_pattern, step, skip);
             }
         }
         // arm64 patterns
         else if (e_machine == EM_AARCH64)
         {
-            std::string hex = "81 80 52 00 00 00 00 00 03 1F 2A";
+            std::string ida_pattern = "81 80 52 00 00 00 00 00 03 1F 2A";
             std::string mask = "xxx?????xxx";
             int step = 0x17;
 
-            uintptr_t insn_address = findPattern(PATTERN_MAP_TYPE::MAP_RXP, hex, mask, step);
+            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
             if (insn_address != 0)
             {
                 int64_t adrp_pc_rel = 0;
@@ -164,9 +158,9 @@ public:
                 uintptr_t page_off = INSN_PAGE_OFFSET(insn_address);
 
                 uint32_t adrp_insn = 0, add_insn = 0, ldrb_insn = 0;
-                PMemory::vm_rpm_ptr((void *)(insn_address), &adrp_insn, sizeof(uint32_t));
-                PMemory::vm_rpm_ptr((void *)(insn_address + 4), &add_insn, sizeof(uint32_t));
-                PMemory::vm_rpm_ptr((void *)(insn_address + 8), &ldrb_insn, sizeof(uint32_t));
+                kMgr.readMem((insn_address), &adrp_insn, sizeof(uint32_t));
+                kMgr.readMem((insn_address + 4), &add_insn, sizeof(uint32_t));
+                kMgr.readMem((insn_address + 8), &ldrb_insn, sizeof(uint32_t));
 
                 if (adrp_insn == 0 || add_insn == 0 || ldrb_insn == 0)
                     return 0;
@@ -195,16 +189,17 @@ public:
         int32_t in;
         uintptr_t out[16];
 
-        in = (PMemory::vm_rpm_ptr<int32_t>((void *)enc_names) - 100) / 3;
-        out[in - 1] = PMemory::vm_rpm_ptr<uintptr_t>((void *)(enc_names + 8));
-
+        kMgr.readMem((enc_names - 100) / 3, &in, sizeof(int32_t));
+        kMgr.readMem(enc_names + 8, &out[in - 1], sizeof(uintptr_t));
         while (in - 2 >= 0)
         {
-            out[in - 2] = PMemory::vm_rpm_ptr<uintptr_t>((void *)(out[in - 1]));
+            kMgr.readMem(out[in - 1], &out[in - 2], sizeof(uintptr_t));
             --in;
         }
 
-        return PMemory::vm_rpm_ptr<uintptr_t>((void *)(out[0]));
+        uintptr_t ret = 0;
+        kMgr.readMem(out[0], &ret, sizeof(uintptr_t));
+        return ret;
     }
 
     UE_Offsets *GetOffsets() const override

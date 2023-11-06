@@ -10,4 +10,9 @@ adb shell su -c "chmod 755 /data/local/tmp/UE4Dump3r_arm"
 adb push build/libs/x86/UE4Dump3r_x86 /data/local/tmp
 adb shell su -c "chmod 755 /data/local/tmp/UE4Dump3r_x86"
 
+adb push build/libs/x86_64/UE4Dump3r_x86_64 /data/local/tmp
+adb shell su -c "chmod 755 /data/local/tmp/UE4Dump3r_x86_64"
+
+adb shell su -c ".//data/local/tmp/UE4Dump3r_arm64 -o /sdcard"
+
 pause

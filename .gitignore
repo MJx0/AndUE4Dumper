@@ -1,14 +1,12 @@
 .DS_Store
 
+.cache/
+
 .vscode/
 
 build/
 libs/
 obj/
-
-AndUE4Dumper/build/
-AndUE4Dumper/libs/
-AndUE4Dumper/obj/
 
 *.o
 *.obj

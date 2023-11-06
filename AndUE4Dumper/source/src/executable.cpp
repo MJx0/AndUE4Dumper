@@ -12,23 +12,23 @@
 
 #include "KittyCmdln.h"
 
+#include "Core/ioutils.h"
 #include "Core/Dumper.h"
 
 #include "Core/GameProfiles/Games/PES.h"
 #include "Core/GameProfiles/Games/ARK.h"
-#include "Core/GameProfiles/Games/Apex.h"
 #include "Core/GameProfiles/Games/DBD.h"
 #include "Core/GameProfiles/Games/PUBGM.h"
 #include "Core/GameProfiles/Games/Distyle.h"
 #include "Core/GameProfiles/Games/MortalK.h"
 
-IGameProfile *UE_Games[]{
+IGameProfile *UE_Games[] = 
+{
     new PESProfile(),
     new DistyleProfile(),
     new MortalKProfile(),
     new ArkProfile(),
     new DBDProfile(),
-    new ApexProfile(),
     new PUBGMProfile(),
 };
 
@@ -36,27 +36,25 @@ size_t UE_GamesCount = (sizeof(UE_Games) / sizeof(IGameProfile *));
 
 bool bNeededHelp = false;
 
-Dumper::DumpArgs dArgs = {"", "", false, false, false, false, false};
-
 int main(int argc, char **args)
 {
+    setbuf(stdout, nullptr);
+    setbuf(stderr, nullptr);
+    setbuf(stdin, nullptr);
+    
     KittyCmdln cmdline(argc, args);
 
-    cmdline.setUsage("Usage: ./UE4Dump3r [-h] [-o] [-p] [ options ]");
+    cmdline.setUsage("Usage: ./UE4Dump3r [-h] [-o] [ options ]");
 
     cmdline.addCmd("-h", "--help", "show available arguments", false, [&cmdline]()
                    { std::cout << cmdline.toString() << std::endl; bNeededHelp = true; });
 
-    char tmpOutDir[512] = {0}, tmpGamePkg[512] = {0};
-    cmdline.addScanf("-o", "--output", "specify output directory path.", true, "%s", tmpOutDir);
-    cmdline.addScanf("-p", "--package", "specify game ID in advance.", false, "%s", tmpGamePkg);
+    char sOutDir[0xff] = {0};
+    cmdline.addScanf("-o", "--output", "specify output directory path.", true, "%s", sOutDir);
 
     // options
-    cmdline.addFlag("lib", "", "dump UE4 library from memory.", false, &dArgs.dump_lib);
-    cmdline.addFlag("full", "", "generate all-in-one sdk dump.", false, &dArgs.dump_full);
-    cmdline.addFlag("headers", "", "generate header files dump.", false, &dArgs.dump_headers);
-    cmdline.addFlag("objects", "", "generate \"ObjObjects\" dump.", false, &dArgs.dump_objects);
-    cmdline.addFlag("script", "", "generate json file of game functions.", false, &dArgs.gen_functions_script);
+    bool bDumpLib = false;
+    cmdline.addFlag("-dump_lib", "", "dump UE4 library from memory.", false, &bDumpLib);
 
     cmdline.parseArgs();
 
@@ -71,109 +69,81 @@ int main(int argc, char **args)
         return 1;
     }
 
-    std::string gOutDirectory = tmpOutDir;
-    std::string gGamePackage = tmpGamePkg;
-
-    if (gOutDirectory.empty())
+    std::string sOutDirectory = sOutDir;
+    if (sOutDirectory.empty())
     {
         LOGE("Output directory path is not specified.");
         return 1;
     }
 
-    if (gGamePackage.empty())
+    std::cout << "Choose from the available games:" << std::endl;
+    int gameIndex = 1;
+    std::map<int, std::pair<int, int>> gameIndexMap;
+    for (size_t i = 0; i < UE_GamesCount; i++)
     {
-        std::cout << "Choose from the available games:" << std::endl;
-        int gameIndex = 1;
-        std::map<int, std::pair<int, int>> gameIndexMap;
-        for (size_t i = 0; i < UE_GamesCount; i++)
+        const auto& appIDs = UE_Games[i]->GetAppIDs();
+        for (size_t j = 0; j < appIDs.size(); j++)
         {
-            const auto &appIDs = UE_Games[i]->GetAppIDs();
-            for (size_t j = 0; j < appIDs.size(); j++)
-            {
-                std::cout << "\t" << gameIndex << " : " << UE_Games[i]->GetAppName() << " | " << appIDs[j].c_str() << std::endl;
-                gameIndexMap[gameIndex] = {i, j};
-                gameIndex++;
-            }
+            std::cout << "\t" << gameIndex << " : " << UE_Games[i]->GetAppName() << " | " << appIDs[j].c_str() << std::endl;
+            gameIndexMap[gameIndex] = { i, j };
+            gameIndex++;
         }
-
-        std::cout << "Game number: ";
-        int gameNumber = 0;
-        scanf("%d", &gameNumber);
-        if (gameIndexMap.count(gameNumber) <= 0)
-        {
-            LOGE("Game number is not available.");
-            return 1;
-        }
-
-        gGamePackage = UE_Games[gameIndexMap[gameNumber].first]->GetAppIDs()[gameIndexMap[gameNumber].second];
     }
 
-    pid_t gamePID = findProcID(gGamePackage);
+    std::cout << "Game number: ";
+    int gameNumber = 0;
+    scanf("%d", &gameNumber);
+    if (gameIndexMap.count(gameNumber) <= 0)
+    {
+        LOGE("Game number is not available.");
+        return 1;
+    }
+
+    std::string sGamePackage = UE_Games[gameIndexMap[gameNumber].first]->GetAppIDs()[gameIndexMap[gameNumber].second];
+
+    pid_t gamePID = KittyMemoryEx::getProcessID(sGamePackage);
     if (gamePID < 1)
     {
-        LOGE("Couldn't find \"%s\" in the running processes list.", gGamePackage.c_str());
+        LOGE("Couldn't find \"%s\" in the running processes list.", sGamePackage.c_str());
         return 1;
     }
 
-    LOGI("Game: %s", gGamePackage.c_str());
+    LOGI("Game: %s", sGamePackage.c_str());
     LOGI("Process ID: %d", gamePID);
-    LOGI("Output directory: %s", gOutDirectory.c_str());
-    LOGI("Dump Library: %s", dArgs.dump_lib ? "true" : "false");
-    LOGI("Full: %s", dArgs.dump_full ? "true" : "false");
-    LOGI("Headers: %s", dArgs.dump_headers ? "true" : "false");
-    LOGI("Objects: %s", dArgs.dump_objects ? "true" : "false");
-    LOGI("Script: %s", dArgs.gen_functions_script ? "true" : "false");
+    LOGI("Output directory: %s", sOutDirectory.c_str());
+    LOGI("Dump Library: %s", bDumpLib ? "true" : "false");
     LOGI("==========================");
 
-    dArgs.dump_dir = gOutDirectory;
-    dArgs.dump_dir += "/UE4Dump3r";
+    std::string sDumpDir = sOutDirectory + "/UE4Dump3r";
+    std::string sDumpHeadersDir = sDumpDir + "/Headers";
+    ioutils::delete_directory(sDumpDir.c_str());
 
     errno = 0;
-    if (mkdir(dArgs.dump_dir.c_str(), 0777) == -1)
+    if (mkdir(sDumpDir.c_str(), 0777) == -1)
     {
         int err = errno;
-        if (err != EEXIST) // 17
-        {
-            LOGE("Couldn't create output directory [\"%s\"] error=%d | %s.", dArgs.dump_dir.c_str(), err, strerror(err));
-            return 1;
-        }
-    }
-
-    dArgs.dump_dir += "/";
-    dArgs.dump_dir += gGamePackage;
-    dArgs.dump_headers_dir = dArgs.dump_dir + "/Headers";
-
-    ioutils::delete_directory(dArgs.dump_dir.c_str());
-
-    errno = 0;
-    if (mkdir(dArgs.dump_dir.c_str(), 0777) == -1)
-    {
-        int err = errno;
-        LOGE("Couldn't create output directory [\"%s\"] error=%d | %s.", dArgs.dump_dir.c_str(), err, strerror(err));
+        LOGE("Couldn't create output directory [\"%s\"] error=%d | %s.", sDumpDir.c_str(), err, strerror(err));
         return 1;
     }
 
-    if (dArgs.dump_headers)
+    errno = 0;
+    if (mkdir(sDumpHeadersDir.c_str(), 0777) == -1)
     {
-        errno = 0;
-        if (mkdir(dArgs.dump_headers_dir.c_str(), 0777) == -1)
-        {
-            int err = errno;
-            LOGE("Couldn't create output directory [\"%s\"] error=%d | %s.", dArgs.dump_headers_dir.c_str(), err, strerror(err));
-            return 1;
-        }
+        int err = errno;
+        LOGE("Couldn't create headers output directory [\"%s\"] error=%d | %s.", sDumpHeadersDir.c_str(), err, strerror(err));
+        return 1;
     }
 
-    PMemory::Initialize(gamePID, gGamePackage, dArgs.dump_dir);
+    kMgr.initialize(gamePID, EK_MEM_OP_SYSCALL, false);
 
     Dumper::DumpStatus dumpStatus = Dumper::UE_DS_NONE;
     for (auto &it : UE_Games)
     {
         for (auto &pkg : it->GetAppIDs())
         {
-            if (gGamePackage == pkg)
+            if (sGamePackage == pkg)
             {
-                dumpStatus = Dumper::Dump(&dArgs, it);
+                dumpStatus = Dumper::Dump(sDumpDir, sDumpHeadersDir, bDumpLib, it);
                 break;
             }
         }
@@ -189,7 +159,7 @@ int main(int argc, char **args)
         LOGI("Dump Status: %s", status_str.c_str());
     }
 
-    LOGI("Dump Location: %s", dArgs.dump_dir.c_str());
+    LOGI("Dump Location: %s", sDumpDir.c_str());
 
     return 0;
 }

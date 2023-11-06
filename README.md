@@ -7,7 +7,7 @@ project.
 
 ## Features
 
-* Supports ARM64, ARM and x86
+* Supported ABI ARM64, ARM, x86 and x86_64
 * Can be compiled as executable for external and as library for internal use
 * Dump UE4 classes, structs, enums and functions
 * Generate function names json script to use with IDA & Ghidra etc
@@ -19,7 +19,6 @@ project.
 ## Currently Supported Games
 
 * Dead by Daylight Mobile (64bit only)
-* Apex Legends Mobile (32bit & 64bit)
 * PUBG Mobile (32bit & 64bit)
 * ARK Survival (32bit & 64bit)
 * Mortal Kombat (32bit & 64bit)
@@ -39,41 +38,33 @@ The dump output will be at the game's external data folder (/sdcard/Android/data
 ## Executable Usage
 
 You will have to push the dumper in an executable directory like /data/local/tmp then give it execute permission. Its recommended to have adb, you can check [push](AndUE4Dumper/push.bat) script for this.
-Use the compatible dumper, if game is 64bit use arm64, if 32bit then use arm or x86 version.
-run executable in shell ./UE4Dump3r, notice the -p argument to specify game package is optional. the dumper will display list of available game if not set.
-
+Use the compatible dumper, if game is 64bit use arm64 or x86_64, if 32bit then use arm or x86 version.
 ```
-Usage: ./UE4Dump3r [-h] [-o] [-p] [ options ]
+Usage: ./UE4Dump3r [-h] [-o] [ options ]
 
 Required arguments:
    -o, --output        specify output directory path.
 
 Optional arguments:
    -h, --help          show available arguments
-   -p, --package       specify game ID in advance.
-   lib                 dump UE4 library from memory.
-   full                generate all-in-one sdk dump.
-   headers             generate header files dump.
-   objects             generate "ObjObjects" dump.
-   script              generate json file of game functions.
+   -dump_lib           dump UE4 library from memory.
 ```
 
 Example to generate full dump with headers and functions scripts:
 
 ```
-./UE4Dump3r_arm64 -o /sdcard/Download full headers script
+./UE4Dump3r_arm64 -o /sdcard/Download
 Choose from the available games:
         1 : eFootball 2023 | jp.konami.pesam
         2 : Distyle | com.lilithgames.xgame.gp
         3 : Mortal Kombat | com.wb.goog.mkx
         4 : Ark Survival | com.studiowildcard.wardrumstudios.ark
         5 : Dead by Daylight | com.bhvr.deadbydaylight
-        6 : Apex Legends | com.ea.gp.apexlegendsmobilefps
-        7 : PUBG | com.tencent.ig
-        8 : PUBG | com.rekoo.pubgm
-        9 : PUBG | com.pubg.imobile
-        10 : PUBG | com.pubg.krmobile
-        11 : PUBG | com.vng.pubgmobile
+        6 : PUBG | com.tencent.ig
+        7 : PUBG | com.rekoo.pubgm
+        8 : PUBG | com.pubg.imobile
+        9 : PUBG | com.pubg.krmobile
+        10 : PUBG | com.vng.pubgmobile
 Game number: 1
 ```
 

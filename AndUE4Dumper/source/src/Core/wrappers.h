@@ -672,34 +672,26 @@ bool UE_UObject::IsA() const
 // Wrapper for 'FILE*' that closes the file handle when it goes out of scope
 class File
 {
-private:
-	FILE *file;
-
 public:
-	File() : file(nullptr) {}
-	File(const char *path, const char *mode)
-	{
-		file = fopen(path, mode);
-	}
-	~File()
-	{
-		if (file)
-		{
-			fclose(file);
-		}
-	}
-	inline void open(const char *path, const char *mode) { file = fopen(path, mode); }
-	inline void close()
-	{
-		if (file)
-		{
-			fclose(file);
-			file = nullptr;
-		}
-	}
+    FILE *file;
 
-	operator bool() const { return file != nullptr; }
-	operator FILE *() { return file; }
+    File() : file(nullptr) {}
+    File(const std::string &path, const char *mode)
+    {
+        file = fopen(path.c_str(), mode);
+    }
+    ~File()
+    {
+        if (file)
+        {
+            fclose(file);
+        }
+    }
+	inline void open(const std::string &path, const char *mode) { file = fopen(path.c_str(), mode); }
+	inline void close() { if (file) { fclose(file); file = nullptr; } }
+
+    bool ok() const { return file != nullptr; }
+    operator FILE *() { return file; }
 };
 
 class UE_UPackage
@@ -764,7 +756,7 @@ private:
 public:
 	UE_UPackage(std::pair<uint8 *const, std::vector<UE_UObject>> &package) : Package(&package){};
 	void Process();
-	bool Save(const char *fulldump_dir, const char *dumpheaders_dir);
+	bool Save(const std::string &dir, const std::string &headers_dir);
 	UE_UObject GetObject() const;
 };
 

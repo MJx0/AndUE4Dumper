@@ -1,4 +1,4 @@
-#include "KittyArm64.h"
+#include "KittyArm64.hpp"
 
 // refs to
 // https://github.com/CAS-Atlantic/AArch64-Encoding
@@ -44,7 +44,7 @@ namespace KittyArm64
 			{
 				// Retrieve msb of 21-bit-signed imm for sign extension.
 				uint64_t msbt = (imm_val >> 20) & 1;
-
+				
 				// Real value is imm multiplied by 4k. Value now has 33-bit information.
 				imm_val <<= 12;
 
