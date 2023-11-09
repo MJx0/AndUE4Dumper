@@ -24,6 +24,8 @@ project.
 * Mortal Kombat (32bit & 64bit)
 * eFootBall 2023 (64bit only)
 * Distyle (64bit only)
+* Farlight 84 (32bit & 64bit)
+* Torchlight: Infinite (64bit only)
 
 <br />
 
@@ -46,7 +48,8 @@ Required arguments:
    -o, --output        specify output directory path.
 
 Optional arguments:
-   -h, --help          show available arguments
+   -h, --help          show available arguments.
+   -p                  specify game package ID in advance.
    -dump_lib           dump UE4 library from memory.
 ```
 
@@ -65,6 +68,8 @@ Choose from the available games:
         8 : PUBG | com.pubg.imobile
         9 : PUBG | com.pubg.krmobile
         10 : PUBG | com.vng.pubgmobile
+        11 : Farlight 84 | com.miraclegames.farlight84
+        12 : Torchlight: Infinite | com.xd.TLglobal
 Game number: 1
 ```
 

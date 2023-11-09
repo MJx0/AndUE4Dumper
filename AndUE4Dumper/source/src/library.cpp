@@ -17,6 +17,7 @@
 #include "Core/GameProfiles/Games/Distyle.h"
 #include "Core/GameProfiles/Games/MortalK.h"
 #include "Core/GameProfiles/Games/Farlight.h"
+#include "Core/GameProfiles/Games/Torchlight.h"
 
 // increase if needed
 #define WAIT_TIME_SEC 20
@@ -29,7 +30,8 @@ IGameProfile *UE_Games[] =
     new ArkProfile(),
     new DBDProfile(),
     new PUBGMProfile(),
-    new FarlightProfile()
+    new FarlightProfile(),
+    new TorchlightProfile()
 };
 
 int UE_GamesCount = (sizeof(UE_Games)/sizeof(IGameProfile*));
