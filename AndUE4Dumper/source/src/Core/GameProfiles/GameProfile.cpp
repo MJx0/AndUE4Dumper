@@ -22,37 +22,46 @@ ElfScanner IGameProfile::GetUE4ELF() const
     return ue4_elf;
 }
 
+bool IGameProfile::isEmulator()  const
+{ 
+    return !KittyMemoryEx::getMapsContain(kMgr.processID(), "/arm/nb/").empty() || !KittyMemoryEx::getMapsContain(kMgr.processID(), "/arm64/nb/").empty();
+}
+
 uintptr_t IGameProfile::findIdaPattern(PATTERN_MAP_TYPE map_type, const std::string &pattern, const int step, uint32_t skip_result) const
 {
     ElfScanner ue4_elf = GetUE4ELF();
     std::vector<KittyMemoryEx::ProcMap> search_segments;
-    
-    if (map_type == PATTERN_MAP_TYPE::MAP_BASE)
+    bool hasBSS = ue4_elf.bss() > 0;
+
+    if (map_type == PATTERN_MAP_TYPE::BSS)
     {
-        search_segments.push_back(ue4_elf.baseSegment());
-    }
-    else if (map_type == PATTERN_MAP_TYPE::MAP_RXP)
-    {
-        for (auto& it : ue4_elf.segments())
-            if (it.is_rx && it.is_private)
-                search_segments.push_back(it);
-        LOGD("RXP Maps Count: %d", search_segments.size());
-    }
-    else if (map_type == PATTERN_MAP_TYPE::MAP_RWP)
-    {
-        for (auto& it : ue4_elf.segments())
-            if (it.is_rw && it.is_private)
-                search_segments.push_back(it);
-        LOGD("RWP Maps Count: %d", search_segments.size());
-    }
-    else if (map_type == PATTERN_MAP_TYPE::MAP_BSS)
-    {
+        if (!hasBSS)
+            return 0;
+
         for (auto& it : ue4_elf.segments())
             if (it.startAddress >= ue4_elf.bss() && it.endAddress <= (ue4_elf.bss() + ue4_elf.bssSize()))
                 search_segments.push_back(it);
-        LOGD("BSS Maps Count: %d", search_segments.size());
     }
-    else return 0;
+    else
+    {
+        for (auto& it : ue4_elf.segments())
+        {
+            if (!it.readable || !it.is_private)
+                continue;
+
+            if (map_type == PATTERN_MAP_TYPE::ANY_X && !it.executable)
+                continue;
+            else if (map_type == PATTERN_MAP_TYPE::ANY_W && !it.writeable)
+                continue;
+
+            if (hasBSS && it.startAddress >= ue4_elf.bss() && it.endAddress <= (ue4_elf.bss() + ue4_elf.bssSize()))
+                continue;
+
+            search_segments.push_back(it);
+        }
+    }
+
+    LOGD("search_segments count = %p", (void*)search_segments.size());
 
     uintptr_t insn_address = 0;
 

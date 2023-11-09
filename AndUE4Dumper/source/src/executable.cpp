@@ -29,7 +29,7 @@ IGameProfile *UE_Games[] =
     new MortalKProfile(),
     new ArkProfile(),
     new DBDProfile(),
-    new PUBGMProfile(),
+    new PUBGMProfile()
 };
 
 size_t UE_GamesCount = (sizeof(UE_Games) / sizeof(IGameProfile *));
@@ -51,6 +51,10 @@ int main(int argc, char **args)
 
     char sOutDir[0xff] = {0};
     cmdline.addScanf("-o", "--output", "specify output directory path.", true, "%s", sOutDir);
+    
+    // optional
+    char sGamePkg[0xff] = {0};
+    cmdline.addScanf("-p", "--package", "specify game package ID in advance.", false, "%s", sGamePkg);
 
     // options
     bool bDumpLib = false;
@@ -69,37 +73,39 @@ int main(int argc, char **args)
         return 1;
     }
 
-    std::string sOutDirectory = sOutDir;
+    std::string sOutDirectory = sOutDir, sGamePackage = sGamePkg;
     if (sOutDirectory.empty())
     {
         LOGE("Output directory path is not specified.");
         return 1;
     }
 
-    std::cout << "Choose from the available games:" << std::endl;
-    int gameIndex = 1;
-    std::map<int, std::pair<int, int>> gameIndexMap;
-    for (size_t i = 0; i < UE_GamesCount; i++)
+    if (sGamePackage.empty())
     {
-        const auto& appIDs = UE_Games[i]->GetAppIDs();
-        for (size_t j = 0; j < appIDs.size(); j++)
-        {
-            std::cout << "\t" << gameIndex << " : " << UE_Games[i]->GetAppName() << " | " << appIDs[j].c_str() << std::endl;
-            gameIndexMap[gameIndex] = { i, j };
-            gameIndex++;
+        std::cout << "Choose from the available games:" << std::endl;
+        int gameIndex = 1;
+        std::map<int, std::pair<int, int>> gameIndexMap;
+        for (size_t i = 0; i < UE_GamesCount; i++) {
+            const auto& appIDs = UE_Games[i]->GetAppIDs();
+            for (size_t j = 0; j < appIDs.size(); j++)
+            {
+                std::cout << "\t" << gameIndex << " : " << UE_Games[i]->GetAppName() << " | " << appIDs[j].c_str() << std::endl;
+                gameIndexMap[gameIndex] = { i, j };
+                gameIndex++;
+            }
         }
-    }
 
-    std::cout << "Game number: ";
-    int gameNumber = 0;
-    scanf("%d", &gameNumber);
-    if (gameIndexMap.count(gameNumber) <= 0)
-    {
-        LOGE("Game number is not available.");
-        return 1;
-    }
+        std::cout << "Game number: ";
+        int gameNumber = 0;
+        scanf("%d", &gameNumber);
+        if (gameIndexMap.count(gameNumber) <= 0)
+        {
+            LOGE("Game number is not available.");
+            return 1;
+        }
 
-    std::string sGamePackage = UE_Games[gameIndexMap[gameNumber].first]->GetAppIDs()[gameIndexMap[gameNumber].second];
+        sGamePackage = UE_Games[gameIndexMap[gameNumber].first]->GetAppIDs()[gameIndexMap[gameNumber].second];
+    }
 
     pid_t gamePID = KittyMemoryEx::getProcessID(sGamePackage);
     if (gamePID < 1)
@@ -115,26 +121,22 @@ int main(int argc, char **args)
     LOGI("==========================");
 
     std::string sDumpDir = sOutDirectory + "/UE4Dump3r";
-    std::string sDumpHeadersDir = sDumpDir + "/Headers";
-    ioutils::delete_directory(sDumpDir.c_str());
+    std::string sDumpGameDir = sDumpDir + "/" + sGamePackage;
+    std::string sDumpHeadersDir = sDumpGameDir + "/Headers";
+    ioutils::delete_directory(sDumpGameDir);
 
-    errno = 0;
-    if (mkdir(sDumpDir.c_str(), 0777) == -1)
+    if (ioutils::mkdir_recursive(sDumpHeadersDir, 0777) == -1)
     {
         int err = errno;
-        LOGE("Couldn't create output directory [\"%s\"] error=%d | %s.", sDumpDir.c_str(), err, strerror(err));
+        LOGE("Couldn't create Output Directory [\"%s\"] error=%d | %s.", sDumpDir.c_str(), err, strerror(err));
         return 1;
     }
 
-    errno = 0;
-    if (mkdir(sDumpHeadersDir.c_str(), 0777) == -1)
+    if (!kMgr.initialize(gamePID, EK_MEM_OP_SYSCALL, false) && !kMgr.initialize(gamePID, EK_MEM_OP_IO, false))
     {
-        int err = errno;
-        LOGE("Couldn't create headers output directory [\"%s\"] error=%d | %s.", sDumpHeadersDir.c_str(), err, strerror(err));
+        LOGE("Failed to initialize KittyMemoryMgr.");
         return 1;
     }
-
-    kMgr.initialize(gamePID, EK_MEM_OP_SYSCALL, false);
 
     Dumper::DumpStatus dumpStatus = Dumper::UE_DS_NONE;
     for (auto &it : UE_Games)
@@ -143,7 +145,7 @@ int main(int argc, char **args)
         {
             if (sGamePackage == pkg)
             {
-                dumpStatus = Dumper::Dump(sDumpDir, sDumpHeadersDir, bDumpLib, it);
+                dumpStatus = Dumper::Dump(sDumpGameDir, sDumpHeadersDir, bDumpLib, it);
                 break;
             }
         }
@@ -159,7 +161,7 @@ int main(int argc, char **args)
         LOGI("Dump Status: %s", status_str.c_str());
     }
 
-    LOGI("Dump Location: %s", sDumpDir.c_str());
+    LOGI("Dump Location: %s", sDumpGameDir.c_str());
 
     return 0;
 }

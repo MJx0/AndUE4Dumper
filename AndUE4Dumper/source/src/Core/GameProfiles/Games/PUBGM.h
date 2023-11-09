@@ -50,8 +50,9 @@ public:
         // arm patterns
         if (e_machine == EM_ARM)
         {
+            PATTERN_MAP_TYPE map_type = isEmulator() ? PATTERN_MAP_TYPE::ANY_R : PATTERN_MAP_TYPE::ANY_X;
             std::string ida_pattern = "BC109FE501108FE0082091E5";
-            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, 0);
+            uintptr_t insn_address = findIdaPattern(map_type, ida_pattern, 0);
             if (insn_address != 0)
             {
                 uintptr_t PC = insn_address + 8, PC_ldr = 0, R1 = 0, R2 = 4;
@@ -65,7 +66,7 @@ public:
             }
 
             // alternative .bss pattern
-            insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BSS, "0100??0100F049020000000000", -2);
+            insn_address = findIdaPattern(PATTERN_MAP_TYPE::BSS, "0100??0100F049020000000000", -2);
             if (insn_address == 0)
             {
                 LOGE("GUObjectArray pattern failed.");
@@ -76,11 +77,11 @@ public:
         // arm64 patterns
         else if (e_machine == EM_AARCH64)
         {
-            std::string ida_pattern = "12 40 B9 00 3E 40 B9 00 00 00 6B 00 00 00 54 00 00 00 00 00 00 00 91";
-            std::string mask = "xxx?xxx???x???x???????x";
+            PATTERN_MAP_TYPE map_type = isEmulator() ? PATTERN_MAP_TYPE::ANY_R : PATTERN_MAP_TYPE::ANY_X;
+            std::string ida_pattern = "12 40 B9 ? 3E 40 B9 ? ? ? 6B ? ? ? 54 ? ? ? ? ? ? ? 91";
             int step = 0xF;
 
-            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
+            uintptr_t insn_address = findIdaPattern(map_type, ida_pattern, step);
             if(insn_address == 0)
             {
                 LOGE("GUObjectArray pattern failed.");
@@ -120,8 +121,9 @@ public:
         // arm patterns
         if (e_machine == EM_ARM)
         {
+            PATTERN_MAP_TYPE map_type = isEmulator() ? PATTERN_MAP_TYPE::ANY_R : PATTERN_MAP_TYPE::ANY_X;
             std::string ida_pattern = "E0019FE500008FE0307090E5";
-            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, 0);
+            uintptr_t insn_address = findIdaPattern(map_type, ida_pattern, 0);
             if (insn_address != 0)
             {
                 uintptr_t PC = insn_address + 0x8, PC_ldr = 0, R1 = 0, R2 = 0x30;
@@ -139,17 +141,17 @@ public:
                 ida_pattern = "00E432D8B00D4F891FB77ECFACA24AFD362843C6E1534D2CA2868E6CA38CBD1764";
                 int step = -0xF;
                 int skip = 1;
-                enc_names = findIdaPattern(PATTERN_MAP_TYPE::MAP_BSS, ida_pattern, step, skip);
+                enc_names = findIdaPattern(PATTERN_MAP_TYPE::BSS, ida_pattern, step, skip);
             }
         }
         // arm64 patterns
         else if (e_machine == EM_AARCH64)
         {
-            std::string ida_pattern = "81 80 52 00 00 00 00 00 03 1F 2A";
-            std::string mask = "xxx?????xxx";
+            PATTERN_MAP_TYPE map_type = isEmulator() ? PATTERN_MAP_TYPE::ANY_R : PATTERN_MAP_TYPE::ANY_X;
+            std::string ida_pattern = "81 80 52 ? ? ? ? ? 03 1F 2A";
             int step = 0x17;
 
-            uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
+            uintptr_t insn_address = findIdaPattern(map_type, ida_pattern, step);
             if (insn_address != 0)
             {
                 int64_t adrp_pc_rel = 0;

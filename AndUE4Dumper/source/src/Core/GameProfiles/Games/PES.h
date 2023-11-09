@@ -34,10 +34,11 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
+        PATTERN_MAP_TYPE map_type = isEmulator() ? PATTERN_MAP_TYPE::ANY_R : PATTERN_MAP_TYPE::ANY_X;
         std::string ida_pattern = "08 ? ? 91 E1 03 ? AA E0 03 08 AA E2 03 1F 2A";
         int step = -4;
 
-        uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
+        uintptr_t insn_address = findIdaPattern(map_type, ida_pattern, step);
         if(insn_address == 0)
         {
             LOGE("GUObjectArray pattern failed.");
@@ -68,10 +69,11 @@ public:
 
     uintptr_t GetNamesPtr() const override
     {
+        PATTERN_MAP_TYPE map_type = isEmulator() ? PATTERN_MAP_TYPE::ANY_R : PATTERN_MAP_TYPE::ANY_X;
         std::string ida_pattern = "F4 4F 01 A9 FD 7B 02 A9 FD 83 ? 91 ? ? ? ? A8 02 ? 39";
         int step = 0x24;
 
-        uintptr_t insn_address = findIdaPattern(PATTERN_MAP_TYPE::MAP_BASE, ida_pattern, step);
+        uintptr_t insn_address = findIdaPattern(map_type, ida_pattern, step);
         if (insn_address == 0)
         {
             LOGE("NamePoolData pattern failed.");

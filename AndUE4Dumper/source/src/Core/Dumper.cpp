@@ -134,7 +134,8 @@ namespace Dumper
 		if (dump_lib)
 		{
 			LOGI("Dumping libUE4.so from memory...");
-			LOGI("Dumping lib: %s.", kMgr.dumpMemELF(ue4_elf.base(), dir + "libUE4_dump.so") ? "success" : "failed");
+			std::string libdumpPath = KittyUtils::strfmt("%s/libUE4_%p-%p.so", dir.c_str(), ue4_elf.base(), ue4_elf.end());
+			LOGI("Dumping lib: %s.", kMgr.dumpMemELF(ue4_elf.base(), libdumpPath) ? "success" : "failed");
 			LOGI("==========================");
 		}
 

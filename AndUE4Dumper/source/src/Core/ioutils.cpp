@@ -120,4 +120,21 @@ namespace ioutils
         return S_ISDIR(st.st_mode);
     }
 
+    int mkdir_recursive(const std::string &dirPath, mode_t mode)
+    {
+        std::string tmp = dirPath;
+        for (char* p = strchr(tmp.data() + 1, '/'); p; p = strchr(p + 1, '/')) {
+            *p = '\0';
+            errno = 0;
+            if (mkdir(tmp.c_str(), mode) == -1) {
+                if (errno != EEXIST) {
+                    *p = '/';
+                    return -1;
+                }
+            }
+            *p = '/';
+        }
+        errno = 0;
+        return mkdir(tmp.c_str(), mode);
+    }
 }

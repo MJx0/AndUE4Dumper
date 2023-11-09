@@ -14,12 +14,15 @@
 
 #define INSN_PAGE_OFFSET(x) ((uintptr_t)x & ~(uintptr_t)(4096 - 1));
 
-enum class PATTERN_MAP_TYPE : uint8_t
+enum PATTERN_MAP_TYPE : int8_t
 {
-    MAP_BASE = 0,
-    MAP_RXP,
-    MAP_RWP,
-    MAP_BSS
+    ANY_R = 0, // Search in any private readable map
+
+    ANY_X,     // Search in any private readable & executable map
+
+    ANY_W,     // Search in any private readable & writeable map
+
+    BSS,       // Search in .bss maps
 };
 
 class IGameProfile
@@ -49,6 +52,7 @@ public:
     virtual UE_Offsets *GetOffsets() const = 0;
 
 protected:
-    // returned address will be absolute not relative.
+    bool isEmulator() const;
+
     uintptr_t findIdaPattern(PATTERN_MAP_TYPE map_type, const std::string &pattern, const int step, uint32_t skip_result = 0) const;
 };

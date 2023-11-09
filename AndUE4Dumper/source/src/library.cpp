@@ -16,6 +16,7 @@
 #include "Core/GameProfiles/Games/PUBGM.h"
 #include "Core/GameProfiles/Games/Distyle.h"
 #include "Core/GameProfiles/Games/MortalK.h"
+#include "Core/GameProfiles/Games/Farlight.h"
 
 // increase if needed
 #define WAIT_TIME_SEC 20
@@ -28,6 +29,7 @@ IGameProfile *UE_Games[] =
     new ArkProfile(),
     new DBDProfile(),
     new PUBGMProfile(),
+    new FarlightProfile()
 };
 
 int UE_GamesCount = (sizeof(UE_Games)/sizeof(IGameProfile*));
@@ -72,23 +74,18 @@ void dump_thread(bool bDumpLib)
     std::string sDumpHeadersDir = sDumpDir + "/Headers";
     ioutils::delete_directory(sDumpDir.c_str());
 
-    errno = 0;
-    if (mkdir(sDumpDir.c_str(), 0777) == -1)
+    if (ioutils::mkdir_recursive(sDumpHeadersDir, 0777) == -1)
     {
         int err = errno;
         LOGE("Couldn't create Output Directory [\"%s\"] error=%d | %s.", sDumpDir.c_str(), err, strerror(err));
         return;
     }
 
-    errno = 0;
-    if (mkdir(sDumpHeadersDir.c_str(), 0777) == -1)
+    if (!kMgr.initialize(gamePID, EK_MEM_OP_SYSCALL, false) && !kMgr.initialize(gamePID, EK_MEM_OP_IO, false))
     {
-        int err = errno;
-        LOGE("Couldn't create Output Directory [\"%s\"] error=%d | %s.", sDumpHeadersDir.c_str(), err, strerror(err));
+        LOGE("Failed to initialize KittyMemoryMgr.");
         return;
     }
-
-    kMgr.initialize(gamePID, EK_MEM_OP_SYSCALL, false);
 
     Dumper::DumpStatus dumpStatus = Dumper::UE_DS_NONE;
     for (auto &it : UE_Games)

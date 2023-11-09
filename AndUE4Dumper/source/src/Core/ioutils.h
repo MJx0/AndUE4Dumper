@@ -21,4 +21,6 @@ namespace ioutils
     void delete_directory(const std::string &directory);
 
     int path_is_directory(const std::string &path);
+
+    int mkdir_recursive(const std::string &dirPath, mode_t mode);
 }
