@@ -77,15 +77,15 @@ Game number: 1
 
 ## Output Files
 
-##### headers
+##### Headers
 
 * C++ headers that you can use in your source, however the headers might not compile directly without a change
 
-##### FullDump.hpp
+##### AIOHeader.hpp
 
-* An all-in-one dump file
+* An all-in-one dump file header
 
-##### objects_dump.txt
+##### ObjectsDump.txt
 
 * ObjObjects dump
 
