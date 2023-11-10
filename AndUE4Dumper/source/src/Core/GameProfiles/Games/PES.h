@@ -61,8 +61,6 @@ public:
             return 0;
 
         add_imm12 = KittyArm64::decode_addsub_imm(add_insn);
-        if (add_imm12 == 0)
-            return 0;
 
         return (page_off + adrp_pc_rel + add_imm12);
     }
@@ -96,8 +94,6 @@ public:
             return 0;
 
         add_imm12 = KittyArm64::decode_addsub_imm(add_insn);
-        if (add_imm12 == 0)
-            return 0;
 
         return (page_off + adrp_pc_rel + add_imm12);
     }

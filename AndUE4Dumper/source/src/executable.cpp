@@ -150,10 +150,11 @@ int main(int argc, char **args)
             if (sGamePackage == pkg)
             {
                 dumpStatus = Dumper::Dump(sDumpGameDir, sDumpHeadersDir, bDumpLib, it);
-                break;
+                goto done;
             }
         }
     }
+done:
 
     if (dumpStatus == Dumper::UE_DS_NONE)
     {

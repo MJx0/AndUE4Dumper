@@ -1736,14 +1736,14 @@ void UE_UPackage::SaveStruct(std::vector<Struct> &arr, FILE *file)
 {
     for (auto &s : arr)
     {
-        fmt::print(file, "// Object Name: {}\n// Size: {:#04x} // Inherited bytes: {:#04x}\n{} {{", s.FullName, s.Size, s.Inherited, s.CppName);
+        fmt::print(file, "// Object: {}\n// Inherited Bytes: {:#0x} | Struct Size: {:#0x}\n{} {{", s.FullName, s.Inherited, s.Size, s.CppName);
 
         if (s.Members.size())
         {
             fmt::print(file, "\n\t// Fields");
             for (auto &m : s.Members)
             {
-                fmt::print(file, "\n\t{} {}; // Offset: {:#04x} // Size: {:#04x}", m.Type, m.Name, m.Offset, m.Size);
+                fmt::print(file, "\n\t{} {}; // Offset: {:#0x} | Size: {:#0x}", m.Type, m.Name, m.Offset, m.Size);
             }
         }
         if (s.Functions.size())
@@ -1751,7 +1751,8 @@ void UE_UPackage::SaveStruct(std::vector<Struct> &arr, FILE *file)
             fmt::print(file, "{}\n\t// Functions", s.Members.size() ? "\n" : "");
             for (auto &f : s.Functions)
             {
-                fmt::print(file, "\n\n\t// Object Name: {}\n\t// Flags: [{}]\n\t// Offset: {:#08x} // Return & Params: [ Num({}) Size({:#0x}) ]\n\t{}({});", f.FullName, f.Flags, f.Func - Profile::BaseAddress, f.NumParams, f.ParamSize, f.CppName, f.Params);
+                void *funcOffset = f.Func ? (void*)(f.Func - Profile::BaseAddress) : nullptr;
+                fmt::print(file, "\n\n\t// Object: {}\n\t// Flags: [{}]\n\t// Offset: {}\n\t// Return & Params: [ Num({}) Size({:#0x}) ]\n\t{}({});", f.FullName, f.Flags, funcOffset, f.NumParams, f.ParamSize, f.CppName, f.Params);
             }
         }
         fmt::print(file, "\n}};\n\n");
@@ -1762,7 +1763,7 @@ void UE_UPackage::SaveEnum(std::vector<Enum> &arr, FILE *file)
 {
     for (auto &e : arr)
     {
-        fmt::print(file, "// Object Name: {}\n{} {{", e.FullName, e.CppName);
+        fmt::print(file, "// Object: {}\n{} {{", e.FullName, e.CppName);
 
         size_t lastIdx = e.Members.size() - 1;
         for (size_t i = 0; i < lastIdx; i++)
@@ -1809,10 +1810,10 @@ bool UE_UPackage::Save(const std::string &dir, const std::string &headers_dir)
     // make safe to use as a file name
     std::string packageName = ioutils::replace_specials(GetObject().GetName(), '_');
 
-	File fulldump_file(dir + "/FullDump.hpp", "a");
+	File fulldump_file(dir + "/AIOHeader.hpp", "a");
 	if (fulldump_file.ok())
 	{
-		fmt::print(fulldump_file, "// {} Dumping: [ Enums: {} | Structs: {} | Classes: {} ]\n\n", packageName, Enums.size(), Structures.size(), Classes.size());
+		fmt::print(fulldump_file, "// Package {}: [ Enums: {} | Structs: {} | Classes: {} ]\n\n", packageName, Enums.size(), Structures.size(), Classes.size());
 	}
 
 	if (Enums.size())
@@ -1882,11 +1883,6 @@ bool UE_UPackage::Save(const std::string &dir, const std::string &headers_dir)
 			UE_UPackage::SaveStruct(Classes, fulldump_file);
 			fmt::print(fulldump_file, "\n\n");
 		}
-	}
-
-	if (fulldump_file.ok())
-	{
-		fmt::print(fulldump_file, "\n\n");
 	}
 
 	return true;

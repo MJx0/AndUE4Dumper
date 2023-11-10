@@ -89,8 +89,6 @@ public:
                 return 0;
 
             add_imm12 = KittyArm64::decode_addsub_imm(add_insn);
-            if (add_imm12 == 0)
-                return 0;
             
             return (page_off + adrp_pc_rel + add_imm12);
         }
@@ -129,7 +127,7 @@ public:
         else if (e_machine == EM_AARCH64)
         {
             PATTERN_MAP_TYPE map_type = isEmulator() ? PATTERN_MAP_TYPE::ANY_R : PATTERN_MAP_TYPE::ANY_X;
-            std::string ida_pattern = "C8 00 00 37 ? ? ? ? ? ? 28 91 ? ? FF 97";
+            std::string ida_pattern = "C8 00 00 37 ? ? ? ? ? ? ? 91 ? ? FF 97";
             int step = 4;
 
             uintptr_t insn_address = findIdaPattern(map_type, ida_pattern, step);
@@ -155,8 +153,8 @@ public:
                 return 0;
 
             add_imm12 = KittyArm64::decode_addsub_imm(add_insn);
-            if (add_imm12 != 0)
-                return (page_off + adrp_pc_rel + add_imm12);
+            
+            return (page_off + adrp_pc_rel + add_imm12);
         }
 
         return 0;

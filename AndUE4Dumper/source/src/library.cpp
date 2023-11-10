@@ -97,10 +97,11 @@ void dump_thread(bool bDumpLib)
             if (sGamePackage == pkg)
             {
                 dumpStatus = Dumper::Dump(sDumpDir, sDumpHeadersDir, bDumpLib, it);
-                break;
+                goto done;
             }
         }
     }
+done:
 
     if (dumpStatus == Dumper::UE_DS_NONE)
     {

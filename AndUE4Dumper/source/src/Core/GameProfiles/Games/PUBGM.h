@@ -29,7 +29,7 @@ public:
             "com.rekoo.pubgm",
             "com.pubg.imobile",
             "com.pubg.krmobile",
-            "com.vng.pubgmobile",  
+            "com.vng.pubgmobile",
         };
 
         // chinese version doesn't have GNames encrypted but FNameEntry* is encrypted
@@ -104,8 +104,6 @@ public:
                 return 0;
 
             add_imm12 = KittyArm64::decode_addsub_imm(add_insn);
-            if (add_imm12 == 0)
-                return 0;
 
             return (page_off + adrp_pc_rel + add_imm12);
         }
@@ -171,10 +169,8 @@ public:
                     return 0;
 
                 add_imm12 = KittyArm64::decode_addsub_imm(add_insn);
-                if (add_imm12 == 0)
-                    return 0;
 
-                if (!KittyArm64::decode_ldrstr_uimm(ldrb_insn, &ldrb_imm12) || ldrb_imm12 == 0)
+                if (!KittyArm64::decode_ldrstr_uimm(ldrb_insn, &ldrb_imm12))
                     return 0;
 
                 enc_names = (page_off + adrp_pc_rel + add_imm12 + ldrb_imm12 - 4);

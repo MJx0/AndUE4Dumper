@@ -162,7 +162,7 @@ namespace Dumper
 
 		LOGI("Dumping, please wait...");
 
-		std::string objfile_path = dir + "/objects_dump.txt";
+		std::string objfile_path = dir + "/ObjectsDump.txt";
 		File objfile(objfile_path, "w");
 		if (!objfile.ok())
 		{
@@ -173,7 +173,7 @@ namespace Dumper
 		std::function<void(UE_UObject)> objdump_callback = nullptr;
 		objdump_callback = [&objfile](UE_UObject object)
 		{
-			fmt::print(objfile, "{}\n", object.GetName());
+			fmt::print(objfile, "[{:010}]: {}\n", object.GetIndex(), object.GetFullName());
 		};
 
 		std::unordered_map<uint8 *, std::vector<UE_UObject>> packages;
@@ -224,13 +224,13 @@ namespace Dumper
 					for (const auto &func : cls.Functions)
 					{
 						// UObject::ProcessInternal for blueprint functions
-						if (!processInternal_once && (func.EFlags & FUNC_BlueprintEvent))
+						if (!processInternal_once && (func.EFlags & FUNC_BlueprintEvent) && func.Func)
 						{
 							JsonGen::idaFunctions.push_back({"UObject", "ProcessInternal", func.Func - Profile::BaseAddress});
 							processInternal_once = true;
 						}
 
-						if (func.EFlags & FUNC_Native)
+						if ((func.EFlags & FUNC_Native) && func.Func)
 						{
 							std::string execFuncName = "exec";
 							execFuncName += func.Name;
@@ -246,7 +246,7 @@ namespace Dumper
 
 					for (const auto &func : st.Functions)
 					{
-						if (func.EFlags & FUNC_Native)
+						if ((func.EFlags & FUNC_Native) && func.Func)
 						{
 							std::string execFuncName = "exec";
 							execFuncName += func.Name;
