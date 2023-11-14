@@ -23,6 +23,7 @@
 #include "Core/GameProfiles/Games/MortalK.h"
 #include "Core/GameProfiles/Games/Farlight.h"
 #include "Core/GameProfiles/Games/Torchlight.h"
+#include "Core/GameProfiles/Games/ArenaBreakout.h"
 
 IGameProfile *UE_Games[] = 
 {
@@ -33,7 +34,8 @@ IGameProfile *UE_Games[] =
     new DBDProfile(),
     new PUBGMProfile(),
     new FarlightProfile(),
-    new TorchlightProfile()
+    new TorchlightProfile(),
+    new ArenaBreakoutProfile(),
 };
 
 size_t UE_GamesCount = (sizeof(UE_Games) / sizeof(IGameProfile *));

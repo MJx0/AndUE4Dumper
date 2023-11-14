@@ -26,6 +26,7 @@ project.
 * Distyle (64bit only)
 * Farlight 84 (32bit & 64bit)
 * Torchlight: Infinite (64bit only)
+* Arena Breakout (64bit only)
 
 <br />
 
