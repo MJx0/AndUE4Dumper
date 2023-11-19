@@ -24,7 +24,13 @@ ElfScanner IGameProfile::GetUE4ELF() const
 
 bool IGameProfile::isEmulator()  const
 { 
-    return !KittyMemoryEx::getMapsContain(kMgr.processID(), "/arm/nb/").empty() || !KittyMemoryEx::getMapsContain(kMgr.processID(), "/arm64/nb/").empty();
+    if (!KittyMemoryEx::getMapsContain(kMgr.processID(), "/arm/nb/").empty() || !KittyMemoryEx::getMapsContain(kMgr.processID(), "/arm64/nb/").empty())
+        return true;
+
+    for (auto &it : GetUE4ELF().segments())
+        if (it.executable) return false;
+
+    return true;
 }
 
 uintptr_t IGameProfile::findIdaPattern(PATTERN_MAP_TYPE map_type, const std::string &pattern, const int step, uint32_t skip_result) const
