@@ -10,7 +10,7 @@ ElfScanner IGameProfile::GetUE4ELF() const
         {
             for (auto& it : KittyMemoryEx::getAllMaps(kMgr.processID()))
             {
-                if (KittyUtils::string_contains(it.pathname, kMgr.processName()) && KittyUtils::string_endswith(it.pathname, ".apk"))
+                if (KittyUtils::String::Contains(it.pathname, kMgr.processName()) && KittyUtils::String::EndsWith(it.pathname, ".apk"))
                     ue4_elf = kMgr.getMemElfInZip(it.pathname, "libUE4.so");
 
                 if (ue4_elf.isValid())

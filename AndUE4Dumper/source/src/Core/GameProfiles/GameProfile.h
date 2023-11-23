@@ -10,8 +10,6 @@
 
 #include "../memory.h"
 
-#include "../KittyArm64.hpp"
-
 #define INSN_PAGE_OFFSET(x) ((uintptr_t)x & ~(uintptr_t)(4096 - 1));
 
 enum PATTERN_MAP_TYPE : int8_t
