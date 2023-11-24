@@ -187,7 +187,9 @@ public:
         int32_t in;
         uintptr_t out[16];
 
-        kMgr.readMem((enc_names - 100) / 3, &in, sizeof(int32_t));
+        kMgr.readMem(enc_names, &in, sizeof(int32_t));
+        in = (in - 100) / 3;
+        
         kMgr.readMem(enc_names + 8, &out[in - 1], sizeof(uintptr_t));
         while (in - 2 >= 0)
         {
