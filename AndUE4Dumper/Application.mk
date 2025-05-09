@@ -5,7 +5,7 @@ APP_OPTIM    := release
 APP_PIE      := true
 
 ifeq ($(APP_OPTIM),release)
-  APP_CFLAGS     := -O2 -DNDEBUG #-Wall #-Wextra
+  APP_CFLAGS     := -O2 -DNDEBUG #-Wall -Wextra
   APP_STRIP_MODE := --strip-all
 else
   APP_CFLAGS     := -O0 -g

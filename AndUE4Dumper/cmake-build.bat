@@ -29,7 +29,7 @@ for %%x in (%ABIs%) do (
     -DANDROID_ABI=%%x ^
     -DANDROID_NATIVE_API_LEVEL=21
 
-    MAKE -C%BUILD_PATH%/%%x -j16
+    MAKE -C%BUILD_PATH%/%%x -j8
 )
 
 PAUSE

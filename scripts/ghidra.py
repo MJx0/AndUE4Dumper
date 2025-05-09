@@ -17,7 +17,7 @@ def make_function(start):
 	if func is None:
 		createFunction(start, None)
 
-f = askFile("script.json from UE4Dumper", "Open")
+f = askFile("script.json from UEDumper", "Open")
 json_data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
 
 monitor.initialize(len(json_data['Functions']))
