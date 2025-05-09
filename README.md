@@ -87,6 +87,10 @@ Game number: 1
 
 * An all-in-one dump file header
 
+##### Logs.txt
+
+* Log file containing dump process logs
+
 ##### Objects.txt
 
 * ObjObjects dump
