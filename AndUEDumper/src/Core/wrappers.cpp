@@ -819,6 +819,21 @@ UE_UClass UE_UByteProperty::StaticClass()
     return obj;
 }
 
+uint8_t UE_UBoolProperty::GetFieldSize() const
+{
+    return vm_rpm_ptr<uint8_t>(object + UEVars::Offsets.UProperty.Size);
+}
+
+uint8_t UE_UBoolProperty::GetByteOffset() const
+{
+    return vm_rpm_ptr<uint8_t>(object + UEVars::Offsets.UProperty.Size + 1);
+}
+
+uint8_t UE_UBoolProperty::GetByteMask() const
+{
+    return vm_rpm_ptr<uint8_t>(object + UEVars::Offsets.UProperty.Size + 2);
+}
+
 uint8_t UE_UBoolProperty::GetFieldMask() const
 {
     return vm_rpm_ptr<uint8_t>(object + UEVars::Offsets.UProperty.Size + 3);
@@ -1001,7 +1016,7 @@ UE_UProperty UE_UMapProperty::GetValueProp() const
 
 std::string UE_UMapProperty::GetTypeStr() const
 {
-    return fmt::format("struct TMap<{}, {}>", GetKeyProp().GetType().second, GetValueProp().GetType().second);
+    return "struct TMap<" + GetKeyProp().GetType().second + ", " + GetValueProp().GetType().second + ">";
 }
 
 UE_UClass UE_UMapProperty::StaticClass()
@@ -1324,9 +1339,25 @@ PropTypeInfo UE_FProperty::GetType() const
 
 IFProperty UE_FProperty::GetInterface() const { return IFProperty(this); }
 
+uint32_t UE_FProperty::FindSubFPropertyBaseOffset() const
+{
+    uint32_t offset = 0;
+    uintptr_t temp = 0;
+    if (vm_rpm_ptr(object + UEVars::Offsets.FProperty.Size, &temp, sizeof(uintptr_t)) && temp > 0xFFFF)
+    {
+        offset = UEVars::Offsets.FProperty.Size;
+    }
+    else if (vm_rpm_ptr(object + UEVars::Offsets.FProperty.Size + sizeof(void *), &temp, sizeof(uintptr_t)) && temp > 0xFFFF)
+    {
+        offset = UEVars::Offsets.FProperty.Size + sizeof(void *);
+    }
+    return offset;
+}
+
 UE_UStruct UE_FStructProperty::GetStruct() const
 {
-    return vm_rpm_ptr<UE_UStruct>(object + UEVars::Offsets.FProperty.Size);
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_UStruct>(object + offset) : UE_UStruct();
 }
 
 std::string UE_FStructProperty::GetTypeStr() const
@@ -1336,7 +1367,8 @@ std::string UE_FStructProperty::GetTypeStr() const
 
 UE_UClass UE_FObjectPropertyBase::GetPropertyClass() const
 {
-    return vm_rpm_ptr<UE_UClass>(object + UEVars::Offsets.FProperty.Size);
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_UClass>(object + offset) : UE_UClass();
 }
 
 std::string UE_FObjectPropertyBase::GetTypeStr() const
@@ -1346,7 +1378,8 @@ std::string UE_FObjectPropertyBase::GetTypeStr() const
 
 UE_FProperty UE_FArrayProperty::GetInner() const
 {
-    return vm_rpm_ptr<UE_FProperty>(object + UEVars::Offsets.FProperty.Size);
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_FProperty>(object + offset) : UE_FProperty();
 }
 
 std::string UE_FArrayProperty::GetTypeStr() const
@@ -1356,7 +1389,8 @@ std::string UE_FArrayProperty::GetTypeStr() const
 
 UE_UEnum UE_FByteProperty::GetEnum() const
 {
-    return vm_rpm_ptr<UE_UEnum>(object + UEVars::Offsets.FProperty.Size);
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_UEnum>(object + offset) : UE_UEnum();
 }
 
 std::string UE_FByteProperty::GetTypeStr() const
@@ -1411,7 +1445,7 @@ UE_FProperty UE_FEnumProperty::GetUnderlayingProperty() const
             p = vm_rpm_ptr<UE_FProperty>(object + UEVars::Offsets.FProperty.Size - sizeof(void *));
             if (p && p.GetName() == "UnderlyingType")
             {
-                off = UEVars::Offsets.FProperty.Size - sizeof(void *);
+                off = UEVars::Offsets.FProperty.Size + sizeof(void *);
             }
         }
         return off == 0 ? nullptr : p;
@@ -1426,16 +1460,16 @@ UE_UEnum UE_FEnumProperty::GetEnum() const
     if (off == 0)
     {
         auto e = vm_rpm_ptr<UE_UEnum>(object + UEVars::Offsets.FProperty.Size + sizeof(void *));
-        if (e && *(uint32_t *)e.GetCppTypeName().data() == 'mune')
+        if (e && e.GetCppTypeName() == "enum")
         {
             off = UEVars::Offsets.FProperty.Size + sizeof(void *);
         }
         else
         {
             e = vm_rpm_ptr<UE_UEnum>(object + UEVars::Offsets.FProperty.Size);
-            if (e && *(uint32_t *)e.GetCppTypeName().data() == 'mune')
+            if (e && e.GetCppTypeName() == "enum")
             {
-                off = UEVars::Offsets.FProperty.Size;
+                off = UEVars::Offsets.FProperty.Size + (sizeof(void *) * 2);
             }
         }
         return off == 0 ? nullptr : e;
@@ -1454,7 +1488,8 @@ std::string UE_FEnumProperty::GetTypeStr() const
 
 UE_UClass UE_FClassProperty::GetMetaClass() const
 {
-    return vm_rpm_ptr<UE_UClass>(object + UEVars::Offsets.FProperty.Size + sizeof(void *));
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_UClass>(object + offset + sizeof(void *)) : UE_UClass();
 }
 
 std::string UE_FClassProperty::GetTypeStr() const
@@ -1470,7 +1505,8 @@ std::string UE_FSoftClassProperty::GetTypeStr() const
 
 UE_FProperty UE_FSetProperty::GetElementProp() const
 {
-    return vm_rpm_ptr<UE_FProperty>(object + UEVars::Offsets.FProperty.Size);
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_FProperty>(object + offset) : UE_FProperty();
 }
 
 std::string UE_FSetProperty::GetTypeStr() const
@@ -1480,22 +1516,25 @@ std::string UE_FSetProperty::GetTypeStr() const
 
 UE_FProperty UE_FMapProperty::GetKeyProp() const
 {
-    return vm_rpm_ptr<UE_FProperty>(object + UEVars::Offsets.FProperty.Size);
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_FProperty>(object + offset) : UE_FProperty();
 }
 
 UE_FProperty UE_FMapProperty::GetValueProp() const
 {
-    return vm_rpm_ptr<UE_FProperty>(object + UEVars::Offsets.FProperty.Size + sizeof(void *));
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_FProperty>(object + offset + sizeof(void *)) : UE_FProperty();
 }
 
 std::string UE_FMapProperty::GetTypeStr() const
 {
-    return fmt::format("struct TMap<{}, {}>", GetKeyProp().GetType().second, GetValueProp().GetType().second);
+    return "struct TMap<" + GetKeyProp().GetType().second + ", " + GetValueProp().GetType().second + ">";
 }
 
 UE_UClass UE_FInterfaceProperty::GetInterfaceClass() const
 {
-    return vm_rpm_ptr<UE_UClass>(object + UEVars::Offsets.FProperty.Size);
+    uint32_t offset = FindSubFPropertyBaseOffset();
+    return offset ? vm_rpm_ptr<UE_UClass>(object + offset) : UE_UClass();
 }
 
 std::string UE_FInterfaceProperty::GetTypeStr() const
@@ -1686,6 +1725,8 @@ void UE_UPackage::GenerateStruct(const UE_UStruct &object, std::vector<Struct> &
                 offset++;
                 bitOffset = 0;
             }
+
+            m->extra = fmt::format("FieldMask({:#04x}))", boolProp->GetFieldMask());
         }
         else
         {
@@ -1796,6 +1837,10 @@ void UE_UPackage::AppendStructsToBuffer(std::vector<Struct> &arr, BufferFmt *pBu
             for (auto &m : s.Members)
             {
                 pBufFmt->append("\n\t{} {}; // {:#04x}({:#04x})", m.Type, m.Name, m.Offset, m.Size);
+                if (!m.extra.empty())
+                {
+                    pBufFmt->append(" ( {} )", m.extra);
+                }
             }
         }
         if (s.Functions.size())
