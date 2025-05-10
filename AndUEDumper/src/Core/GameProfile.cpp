@@ -175,10 +175,7 @@ std::string IGameProfile::GetNameEntryString_Internal(uint8_t *entry) const
         pStr = entry + offsets->FNameEntry23.Header + sizeof(int16_t);
     }
 
-    std::string tempResult = vm_rpm_str(pStr, strLen);
-
-    std::string result;
-    utf8::unchecked::replace_invalid(tempResult.begin(), tempResult.end(), std::back_inserter(result), '?');
+    std::string result = vm_rpm_str(pStr, strLen);
 
     if (strNumber > 0)
         result += '_' + std::to_string(strNumber - 1);
