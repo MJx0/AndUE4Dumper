@@ -7,7 +7,7 @@
 #include "../Utils/memory.h"
 
 #include "GameProfile.h"
-#include "Offsets.h"
+#include "UE_Offsets.h"
 
 #include <utfcpp/unchecked.h>
 
@@ -195,22 +195,6 @@ std::string UE_UObject::GetFullName() const
     UE_UClass objectClass = GetClass();
     std::string name = objectClass.GetName() + " " + temp + GetName();
     return name;
-}
-
-std::string UE_UObject::GetCppTypeName() const
-{
-    if (!object) return "";
-
-    if (IsA<UE_UEnum>())
-    {
-        return "enum";
-    }
-    else if (IsA<UE_UClass>())
-    {
-        return "class";
-    }
-
-    return "struct";
 }
 
 std::string UE_UObject::GetCppName() const
@@ -759,7 +743,7 @@ UE_UClass UE_UObjectPropertyBase::GetPropertyClass() const
 
 std::string UE_UObjectPropertyBase::GetTypeStr() const
 {
-    return GetPropertyClass().GetCppTypeName() + " " + GetPropertyClass().GetCppName() + "*";
+    return "struct " + GetPropertyClass().GetCppName() + "*";
 }
 
 UE_UClass UE_UObjectPropertyBase::StaticClass()
@@ -775,7 +759,7 @@ UE_UClass UE_UObjectProperty::GetPropertyClass() const
 
 std::string UE_UObjectProperty::GetTypeStr() const
 {
-    return GetPropertyClass().GetCppTypeName() + " " + GetPropertyClass().GetCppName() + "*";
+    return "struct " + GetPropertyClass().GetCppName() + "*";
 }
 
 UE_UClass UE_UObjectProperty::StaticClass()
@@ -973,7 +957,7 @@ UE_UClass UE_UClassProperty::GetMetaClass() const
 
 std::string UE_UClassProperty::GetTypeStr() const
 {
-    return "class " + GetMetaClass().GetCppName() + "*";
+    return "struct " + GetMetaClass().GetCppName() + "*";
 }
 
 UE_UClass UE_UClassProperty::StaticClass()
@@ -985,7 +969,7 @@ UE_UClass UE_UClassProperty::StaticClass()
 std::string UE_USoftClassProperty::GetTypeStr() const
 {
     auto className = GetMetaClass() ? GetMetaClass().GetCppName() : GetPropertyClass().GetCppName();
-    return "struct TSoftClassPtr<class " + className + "*>";
+    return "struct TSoftClassPtr<struct " + className + "*>";
 }
 
 UE_UProperty UE_USetProperty::GetElementProp() const
@@ -1373,7 +1357,7 @@ UE_UClass UE_FObjectPropertyBase::GetPropertyClass() const
 
 std::string UE_FObjectPropertyBase::GetTypeStr() const
 {
-    return GetPropertyClass().GetCppTypeName() + " " + GetPropertyClass().GetCppName() + "*";
+    return "struct " + GetPropertyClass().GetCppName() + "*";
 }
 
 UE_FProperty UE_FArrayProperty::GetInner() const
@@ -1460,14 +1444,14 @@ UE_UEnum UE_FEnumProperty::GetEnum() const
     if (off == 0)
     {
         auto e = vm_rpm_ptr<UE_UEnum>(object + UEVars::Offsets.FProperty.Size + sizeof(void *));
-        if (e && e.GetCppTypeName() == "enum")
+        if (e && e.IsA<UE_UEnum>())
         {
             off = UEVars::Offsets.FProperty.Size + sizeof(void *);
         }
         else
         {
             e = vm_rpm_ptr<UE_UEnum>(object + UEVars::Offsets.FProperty.Size);
-            if (e && e.GetCppTypeName() == "enum")
+            if (e && e.IsA<UE_UEnum>())
             {
                 off = UEVars::Offsets.FProperty.Size + (sizeof(void *) * 2);
             }
@@ -1494,13 +1478,13 @@ UE_UClass UE_FClassProperty::GetMetaClass() const
 
 std::string UE_FClassProperty::GetTypeStr() const
 {
-    return "class " + GetMetaClass().GetCppName() + "*";
+    return "struct " + GetMetaClass().GetCppName() + "*";
 }
 
 std::string UE_FSoftClassProperty::GetTypeStr() const
 {
     auto className = GetMetaClass() ? GetMetaClass().GetCppName() : GetPropertyClass().GetCppName();
-    return "struct TSoftClassPtr<class " + className + "*>";
+    return "struct TSoftClassPtr<struct " + className + "*>";
 }
 
 UE_FProperty UE_FSetProperty::GetElementProp() const
@@ -1556,7 +1540,7 @@ void UE_UPackage::GenerateBitPadding(std::vector<Member> &members, uint32_t offs
 {
     Member padding;
     padding.Type = "uint8_t";
-    padding.Name = fmt::format("BitPad_0x{:0X}_{} : {}", offset, bitOffset, size);
+    padding.Name = fmt::format("BitPad_0x{:X}_{} : {}", offset, bitOffset, size);
     padding.Offset = offset;
     padding.Size = 1;
     members.push_back(padding);
@@ -1566,7 +1550,7 @@ void UE_UPackage::GeneratePadding(std::vector<Member> &members, uint32_t offset,
 {
     Member padding;
     padding.Type = "uint8_t";
-    padding.Name = fmt::format("Pad_0x{:0X}[{:#0x}]", offset, size);
+    padding.Name = fmt::format("Pad_0x{:X}[0x{:X}]", offset, size);
     padding.Offset = offset;
     padding.Size = size;
     members.push_back(padding);
@@ -1663,15 +1647,13 @@ void UE_UPackage::GenerateStruct(const UE_UStruct &object, std::vector<Struct> &
     s.Name = object.GetName();
     s.FullName = object.GetFullName();
 
-    bool isClass = object.IsA<UE_UClass>();
-    s.CppName = isClass ? "class " : "struct ";
+    s.CppName = "struct ";
     s.CppName += object.GetCppName();
 
     auto super = object.GetSuper();
     if (super)
     {
         s.CppName += " : ";
-        if (isClass) s.CppName += "public ";
         s.CppName += super.GetCppName();
         s.Inherited = super.GetSize();
     }
@@ -1726,13 +1708,13 @@ void UE_UPackage::GenerateStruct(const UE_UStruct &object, std::vector<Struct> &
                 bitOffset = 0;
             }
 
-            m->extra = fmt::format("FieldMask({:#04x}))", boolProp->GetFieldMask());
+            m->extra = fmt::format("Mask(0x{:X})", boolProp->GetFieldMask());
         }
         else
         {
             if (arrDim > 1)
             {
-                m->Name += fmt::format("[{:#0x}]", arrDim);
+                m->Name += fmt::format("[0x{:X}]", arrDim);
             }
 
             offset += m->Size;
@@ -1829,14 +1811,14 @@ void UE_UPackage::AppendStructsToBuffer(std::vector<Struct> &arr, BufferFmt *pBu
 {
     for (auto &s : arr)
     {
-        pBufFmt->append("// Object: {}\n// Size: {:#04x} (Inherited: {:#04x})\n{}\n{{",
+        pBufFmt->append("// Object: {}\n// Size: 0x{:X} (Inherited: 0x{:X})\n{}\n{{",
                         s.FullName, s.Size, s.Inherited, s.CppName);
 
         if (s.Members.size())
         {
             for (auto &m : s.Members)
             {
-                pBufFmt->append("\n\t{} {}; // {:#04x}({:#04x})", m.Type, m.Name, m.Offset, m.Size);
+                pBufFmt->append("\n\t{} {}; // 0x{:X}(0x{:X})", m.Type, m.Name, m.Offset, m.Size);
                 if (!m.extra.empty())
                 {
                     pBufFmt->append(" ( {} )", m.extra);
@@ -1851,7 +1833,7 @@ void UE_UPackage::AppendStructsToBuffer(std::vector<Struct> &arr, BufferFmt *pBu
             for (auto &f : s.Functions)
             {
                 void *funcOffset = f.Func ? (void *)(f.Func - UEVars::BaseAddress) : nullptr;
-                pBufFmt->append("\n\n\t// Object: {}\n\t// Flags: [{}]\n\t// Offset: {}\n\t// Params: [ Num({}) Size({:#04x}) ]\n\t{}({});", f.FullName, f.Flags, funcOffset, f.NumParams, f.ParamSize, f.CppName, f.Params);
+                pBufFmt->append("\n\n\t// Object: {}\n\t// Flags: [{}]\n\t// Offset: {}\n\t// Params: [ Num({}) Size(0x{:X}) ]\n\t{}({});", f.FullName, f.Flags, funcOffset, f.NumParams, f.ParamSize, f.CppName, f.Params);
             }
         }
         pBufFmt->append("\n}};\n\n");

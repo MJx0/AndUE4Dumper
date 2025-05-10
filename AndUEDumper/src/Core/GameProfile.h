@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "Offsets.h"
+#include "UE_Offsets.h"
 
 #include "../Utils/Logger.h"
 #include "../Utils/memory.h"

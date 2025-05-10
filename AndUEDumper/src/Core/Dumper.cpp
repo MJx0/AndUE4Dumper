@@ -147,20 +147,20 @@ namespace Dumper
         outBuffersMap->insert({"Logs.txt", BufferFmt()});
         BufferFmt &logsBufferFmt = outBuffersMap->at("Logs.txt");
 
-        logsBufferFmt.append("e_machine: {:#04x}\n", ue_elf.header().e_machine);
+        logsBufferFmt.append("e_machine: 0x{:X}\n", ue_elf.header().e_machine);
         logsBufferFmt.append("Library: {}\n", ue_elf.filePath().c_str());
-        logsBufferFmt.append("BaseAddress: {:#08x}\n", ue_elf.base());
+        logsBufferFmt.append("BaseAddress: 0x{:X}\n", ue_elf.base());
         logsBufferFmt.append("BaseMap: {}\n", ue_elf.baseSegment().toString());
         logsBufferFmt.append("==========================\n");
 
         if (!UEVars::isUsingFNamePool)
         {
-            logsBufferFmt.append("GNames: [<Base> + {:#08x}] = {:#08x}\n",
+            logsBufferFmt.append("GNames: [<Base> + 0x{:X] = 0x{:X}\n",
                                  UEVars::GNamesPtr - UEVars::BaseAddress, UEVars::GNamesPtr);
         }
         else
         {
-            logsBufferFmt.append("FNamePool: [<Base> + {:#08x}] = {:#08x}\n",
+            logsBufferFmt.append("FNamePool: [<Base> + 0x{:X}] = 0x{:X}\n",
                                  UEVars::NamePoolDataPtr - UEVars::BaseAddress, UEVars::NamePoolDataPtr);
         }
 
@@ -171,7 +171,7 @@ namespace Dumper
         }
         logsBufferFmt.append("==========================\n");
 
-        logsBufferFmt.append("ObjObjects: [<Base> + {:#08x}] = {:#08x}\n", UEVars::ObjObjectsPtr - UEVars::BaseAddress, UEVars::ObjObjectsPtr);
+        logsBufferFmt.append("ObjObjects: [<Base> + 0x{:X}] = 0x{:X}\n", UEVars::ObjObjectsPtr - UEVars::BaseAddress, UEVars::ObjObjectsPtr);
         logsBufferFmt.append("ObjObjects Num: {}\n", UEVars::ObjObjects.GetNumElements());
         logsBufferFmt.append("Test Dumping First 5 Name Entries\n");
         for (int i = 0; i < 5; i++)

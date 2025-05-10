@@ -217,7 +217,6 @@ public:
     std::string GetName() const;
     std::string GetFullName() const;
     std::string GetCppName() const;
-    std::string GetCppTypeName() const;
     void *GetAddress() const { return object; }
     operator uint8_t *() const { return object; };
     operator bool() const { return object != nullptr; }
