@@ -33,7 +33,7 @@
 
 std::vector<IGameProfile *> UE_Games = {
     new PESProfile(),
-    new DistyleProfile(),
+    new DislyteProfile(),
     new MortalKombatProfile(),
     new FarlightProfile(),
     new TorchlightProfile(),

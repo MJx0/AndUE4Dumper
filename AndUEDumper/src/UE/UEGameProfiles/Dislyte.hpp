@@ -3,10 +3,10 @@
 #include "../UEGameProfile.hpp"
 using namespace UEMemory;
 
-class DistyleProfile : public IGameProfile
+class DislyteProfile : public IGameProfile
 {
 public:
-    DistyleProfile() = default;
+    DislyteProfile() = default;
 
     bool ArchSupprted() const override
     {
