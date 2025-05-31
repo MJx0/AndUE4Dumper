@@ -10,13 +10,13 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := UEDump3r_$(TARGET_ARCH)
 
-LOCAL_CPPFLAGS += -fexceptions -std=c++17 -DkNO_KEYSTONE -D_EXECUTABLE
+LOCAL_CPPFLAGS += -fexceptions -std=c++17 -DkNO_KEYSTONE -DkEXECUTABLE
 
 LOCAL_C_INCLUDES += $(KITTYMEMORY_PATH) $(DEPS_PATH)
 
-LOCAL_SRC_FILES := executable.cpp \
+LOCAL_SRC_FILES := executable.cpp Dumper.cpp UPackageGenerator.cpp \
 $(subst $(LOCAL_PATH)/,,$(wildcard $(LOCAL_PATH)/Utils/*.cpp)) \
-$(subst $(LOCAL_PATH)/,,$(wildcard $(LOCAL_PATH)/Core/*.cpp)) \
+$(subst $(LOCAL_PATH)/,,$(wildcard $(LOCAL_PATH)/UE/*.cpp)) \
 $(subst $(LOCAL_PATH)/,,$(DEPS_SRC))
 
 LOCAL_LDLIBS += -llog

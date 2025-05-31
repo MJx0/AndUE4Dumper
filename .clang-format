@@ -1,4 +1,4 @@
-BasedOnStyle: LLVM
+BasedOnStyle: Google
 UseTab: Never
 IndentWidth: 4
 TabWidth: 4
@@ -8,3 +8,6 @@ IndentCaseLabels: false
 ColumnLimit: 0
 AccessModifierOffset: -4
 NamespaceIndentation: All
+AllowShortLambdasOnASingleLine: All
+LambdaBodyIndentation: OuterScope
+SortIncludes: Never

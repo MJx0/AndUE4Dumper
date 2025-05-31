@@ -1,18 +1,17 @@
-#include "BufferFmt.h"
+#include "BufferFmt.hpp"
 
-bool BufferFmt::_writeBufferToFile(const std::string &filePath, const char *mode) const
+bool BufferFmt::_writeBufferToFile(const std::string& filePath, const char* mode) const
 {
-    FILE *file = std::fopen(filePath.c_str(), mode);
-    if (!file)
-        return false;
+    FILE* file = std::fopen(filePath.c_str(), mode);
+    if (!file) return false;
 
     size_t buffer_size = _buffer.size();
-    size_t chunk_size = std::min<size_t>(buffer_size, 1024 * 1024); // Cap at 1MB
+    size_t chunk_size = std::min<size_t>(buffer_size, 1024 * 1024);  // Cap at 1MB
 
     // Write buffer in chunks
     if (buffer_size > 0)
     {
-        const char *data = _buffer.data();
+        const char* data = _buffer.data();
         size_t remaining = buffer_size;
         size_t offset = 0;
 

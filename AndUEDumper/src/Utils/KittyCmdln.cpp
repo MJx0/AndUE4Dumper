@@ -1,4 +1,4 @@
-#include "KittyCmdln.h"
+#include "KittyCmdln.hpp"
 
 #include <sstream>
 #include <iomanip>
