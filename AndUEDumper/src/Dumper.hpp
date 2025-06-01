@@ -45,7 +45,7 @@ public:
     inline void setDumpProgressCallback(const ProgressCallback &f) { _dumpProgressCallback = f; }
 
 private:
-    void DumpExecutableInfo(BufferFmt &logsbufferFmt);
+    void DumpExecutableInfo(BufferFmt &logsBufferFmt);
 
     void DumpNamesInfo(BufferFmt &logsBufferFmt);
 
