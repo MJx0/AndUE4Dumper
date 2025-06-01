@@ -32,7 +32,7 @@ public:
 
     bool Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap);
 
-    const IGameProfile *GetProfilr() const { return _profile; }
+    const IGameProfile *GetProfile() const { return _profile; }
 
     std::string GetLastError() const { return _lastError; }
 
