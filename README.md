@@ -33,6 +33,10 @@ project.
 * Soul Blade Revolution
 * Lineage 2 Revolution
 * eFootball (PES)
+* King Arthur
+* Night Crows
+* Century Age Of Ashes
+* Case 2 Animatronics
 
 ## Library Usage
 
@@ -52,9 +56,9 @@ Required arguments:
    -o, --output        specify output directory path.
 
 Optional arguments:
-   -h, --help          show available arguments.
-   -p                  specify game package ID in advance.
-   -dump_lib           dump UE library from memory.
+   -h, --help          show available arguments
+   -p, --package       specify game package ID in advance.
+   -d, --dumplib       dump UE library from memory.
 ```
 
 ## Output Files

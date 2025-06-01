@@ -3,10 +3,10 @@
 #include "../UEGameProfile.hpp"
 using namespace UEMemory;
 
-class OdinValhallaProfile : public IGameProfile
+class CenturyProfile : public IGameProfile
 {
 public:
-    OdinValhallaProfile() = default;
+    CenturyProfile() = default;
 
     bool ArchSupprted() const override
     {
@@ -16,12 +16,12 @@ public:
 
     std::string GetAppName() const override
     {
-        return "Odin Valhalla Rising";
+        return "Century Age of Ashes";
     }
 
     std::vector<std::string> GetAppIDs() const override
     {
-        return {"com.kakaogames.gbod"};
+        return {"com.Playwing.Century"};
     }
 
     bool isUsingCasePreservingName() const override
@@ -111,7 +111,7 @@ public:
 
     UE_Offsets *GetOffsets() const override
     {
-        static UE_Offsets offsets = UE_DefaultOffsets::UE4_23_24(isUsingCasePreservingName());
+        static UE_Offsets offsets = UE_DefaultOffsets::UE4_25_27(isUsingCasePreservingName());
         return &offsets;
     }
 };

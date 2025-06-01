@@ -30,6 +30,10 @@
 #include "UE/UEGameProfiles/TowerFantasy.hpp"
 #include "UE/UEGameProfiles/SoulBlade.hpp"
 #include "UE/UEGameProfiles/Lineage2.hpp"
+#include "UE/UEGameProfiles/NightCrows.hpp"
+#include "UE/UEGameProfiles/Case2.hpp"
+#include "UE/UEGameProfiles/KingArthur.hpp"
+#include "UE/UEGameProfiles/Century.hpp"
 
 std::vector<IGameProfile *> UE_Games = {
     new PESProfile(),
@@ -49,6 +53,10 @@ std::vector<IGameProfile *> UE_Games = {
     new TowerFantasyProfile(),
     new SoulBladeProfile(),
     new Lineage2Profile(),
+    new Case2Profile(),
+    new CenturyProfile(),
+    new KingArthurProfile(),
+    new NightCrowsProfile(),
 };
 
 // increase if needed

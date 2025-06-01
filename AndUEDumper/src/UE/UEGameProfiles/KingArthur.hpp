@@ -3,10 +3,10 @@
 #include "../UEGameProfile.hpp"
 using namespace UEMemory;
 
-class OdinValhallaProfile : public IGameProfile
+class KingArthurProfile : public IGameProfile
 {
 public:
-    OdinValhallaProfile() = default;
+    KingArthurProfile() = default;
 
     bool ArchSupprted() const override
     {
@@ -16,12 +16,12 @@ public:
 
     std::string GetAppName() const override
     {
-        return "Odin Valhalla Rising";
+        return "King Arthur";
     }
 
     std::vector<std::string> GetAppIDs() const override
     {
-        return {"com.kakaogames.gbod"};
+        return {"com.kabam.knights.legends"};
     }
 
     bool isUsingCasePreservingName() const override
@@ -36,15 +36,11 @@ public:
 
     bool isUsingOutlineNumberName() const override
     {
-        return false;
+        return true;
     }
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        uintptr_t guobjectarray = GetUnrealEngineELF().findSymbol("GUObjectArray");
-        if (guobjectarray != 0)
-            return guobjectarray;
-
         std::vector<std::pair<std::string, int>> idaPatterns = {
             {"91 E1 03 ? AA E0 03 08 AA E2 03 1F 2A", -7},
             {"B4 21 0C 40 B9 ? ? ? ? ? ? ? 91", 5},
@@ -70,15 +66,6 @@ public:
 
     uintptr_t GetNamesPtr() const override
     {
-        // GNameBlocksDebug = &NamePoolData + Blocks offset
-        uintptr_t blocks_p = GetUnrealEngineELF().findSymbol("GNameBlocksDebug");
-        if (blocks_p != 0)
-        {
-            blocks_p = vm_rpm_ptr<uintptr_t>((void *)blocks_p);
-            if (blocks_p != 0)
-                return (blocks_p - GetOffsets()->FNamePool.BlocksOff);
-        }
-
         std::vector<std::pair<std::string, int>> idaPatterns = {
             // FNameEntry const* FName::GetEntry(FNameEntryId id);
             {"F4 4F 01 A9 FD 7B 02 A9 FD 83 00 91 ? ? ? ? ? ? ? ? A8 02 ? 39", 0x18},
@@ -86,6 +73,8 @@ public:
 
             // DebugDump
             {"fd 7b 01 a9 fd 43 00 91 ? ? ? ? 89 ? ? 39 f3 03 08 aa c9 00 00 37 ? ? ? ? ? ? ? 91", 0x18},
+
+            {"f8 c8 ? ? 39 c8 00 00 37 ? ? ? ? ? ? ? 91", 9},
 
             // GetPlainName ToString AppendString GetStringLength
             {"02 ? 91 C8 00 00 37 ? ? ? ? ? ? ? 91", 7},
@@ -111,7 +100,7 @@ public:
 
     UE_Offsets *GetOffsets() const override
     {
-        static UE_Offsets offsets = UE_DefaultOffsets::UE4_23_24(isUsingCasePreservingName());
+        static UE_Offsets offsets = UE_DefaultOffsets::UE5_00_02(isUsingCasePreservingName(), isUsingOutlineNumberName());
         return &offsets;
     }
 };
