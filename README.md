@@ -37,6 +37,8 @@ project.
 * Night Crows
 * Century Age Of Ashes
 * Case 2 Animatronics
+* Hello Neighbor
+* Hello Neighbor Nicky's Diaries
 
 ## Library Usage
 
