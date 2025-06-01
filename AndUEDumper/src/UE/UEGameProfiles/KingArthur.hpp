@@ -36,7 +36,7 @@ public:
 
     bool isUsingOutlineNumberName() const override
     {
-        return true;
+        return false;
     }
 
     uintptr_t GetGUObjectArrayPtr() const override
