@@ -53,25 +53,41 @@ bool UEDumper::Init(IGameProfile *profile)
     return true;
 }
 
-bool UEDumper::Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap, const ProgressCallback &objectsProgressCallback, const ProgressCallback &dumpProgressCallback)
+bool UEDumper::Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap)
 {
     outBuffersMap->insert({"Logs.txt", BufferFmt()});
     BufferFmt &logsBufferFmt = outBuffersMap->at("Logs.txt");
 
-    DumpExecutableInfo(logsBufferFmt);
+    {
+        if (_dumpExeInfoNotify) _dumpExeInfoNotify(false);
+        DumpExecutableInfo(logsBufferFmt);
+        if (_dumpExeInfoNotify) _dumpExeInfoNotify(true);
+    }
 
-    DumpNamesInfo(logsBufferFmt);
+    {
+        if (_dumpNamesInfoNotify) _dumpNamesInfoNotify(false);
+        DumpNamesInfo(logsBufferFmt);
+        if (_dumpNamesInfoNotify) _dumpNamesInfoNotify(true);
+    }
 
-    DumpObjectsInfo(logsBufferFmt);
+    {
+        if (_dumpObjectsInfoNotify) _dumpObjectsInfoNotify(false);
+        DumpObjectsInfo(logsBufferFmt);
+        if (_dumpObjectsInfoNotify) _dumpObjectsInfoNotify(true);
+    }
 
-    outBuffersMap->insert({"Offsets.hpp", BufferFmt()});
-    BufferFmt &offsetsBufferFmt = outBuffersMap->at("Offsets.hpp");
-    DumpOffsetsInfo(logsBufferFmt, offsetsBufferFmt);
+    {
+        if (_dumpOffsetsInfoNotify) _dumpOffsetsInfoNotify(false);
+        outBuffersMap->insert({"Offsets.hpp", BufferFmt()});
+        BufferFmt &offsetsBufferFmt = outBuffersMap->at("Offsets.hpp");
+        DumpOffsetsInfo(logsBufferFmt, offsetsBufferFmt);
+        if (_dumpOffsetsInfoNotify) _dumpOffsetsInfoNotify(true);
+    }
 
     outBuffersMap->insert({"Objects.txt", BufferFmt()});
     BufferFmt &objsBufferFmt = outBuffersMap->at("Objects.txt");
     std::vector<std::pair<uint8_t *const, std::vector<UE_UObject>>> packages;
-    GatherUObjects(logsBufferFmt, objsBufferFmt, packages, objectsProgressCallback);
+    GatherUObjects(logsBufferFmt, objsBufferFmt, packages, _objectsProgressCallback);
 
     if (packages.empty())
     {
@@ -83,7 +99,7 @@ bool UEDumper::Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap, c
 
     outBuffersMap->insert({"AIOHeader.hpp", BufferFmt()});
     BufferFmt &aioBufferFmt = outBuffersMap->at("AIOHeader.hpp");
-    DumpAIOHeader(logsBufferFmt, aioBufferFmt, packages, dumpProgressCallback);
+    DumpAIOHeader(logsBufferFmt, aioBufferFmt, packages, _dumpProgressCallback);
 
     dumper_jf_ns::base_address = _profile->GetUnrealEngineELF().base();
     if (dumper_jf_ns::jsonFunctions.size())

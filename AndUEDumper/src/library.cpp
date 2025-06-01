@@ -116,11 +116,62 @@ void dump_thread(bool bDumpLib)
         return;
     }
 
-    LOGE("Initializing dumper...");
+    UEDumper uEDumper{};
+
+    uEDumper.setDumpExeInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Executable Info...");
+        }
+    });
+
+    uEDumper.setDumpNamesInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Names Info...");
+        }
+    });
+
+    uEDumper.setDumpObjectsInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Objects Info...");
+        }
+    });
+
+    uEDumper.setOumpOffsetsInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Offsets Info...");
+        }
+    });
+
+    uEDumper.setObjectsProgressCallback([](const SimpleProgressBar &progress)
+    {
+        static bool once = false;
+        if (!once)
+        {
+            once = true;
+            LOGI("Gathering UObjects....");
+        };
+    });
+
+    uEDumper.setDumpProgressCallback([](const SimpleProgressBar &progress)
+    {
+        static bool once = false;
+        if (!once)
+        {
+            once = true;
+            LOGI("Dumping....");
+        };
+    });
+
     bool dumpSuccess = false;
     std::unordered_map<std::string, BufferFmt> dumpbuffersMap;
-
-    UEDumper uEDumper{};
     auto dmpStart = std::chrono::steady_clock::now();
 
     for (auto &it : UE_Games)
@@ -148,7 +199,7 @@ void dump_thread(bool bDumpLib)
             LOGI("Initializing Dumper...");
             if (uEDumper.Init(it))
             {
-                dumpSuccess = uEDumper.Dump(&dumpbuffersMap, nullptr, nullptr);
+                dumpSuccess = uEDumper.Dump(&dumpbuffersMap);
             }
 
             goto done;

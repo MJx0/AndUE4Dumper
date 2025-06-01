@@ -18,15 +18,29 @@ class UEDumper
 {
     IGameProfile const *_profile;
     std::string _lastError;
+    std::function<void(bool)> _dumpExeInfoNotify;
+    std::function<void(bool)> _dumpNamesInfoNotify;
+    std::function<void(bool)> _dumpObjectsInfoNotify;
+    std::function<void(bool)> _dumpOffsetsInfoNotify;
+    ProgressCallback _objectsProgressCallback;
+    ProgressCallback _dumpProgressCallback;
 
 public:
-    UEDumper() : _profile(nullptr) {}
+    UEDumper() : _profile(nullptr), _dumpExeInfoNotify(nullptr), _dumpNamesInfoNotify(nullptr), _dumpObjectsInfoNotify(nullptr), _objectsProgressCallback(nullptr), _dumpProgressCallback(nullptr) {}
 
     bool Init(IGameProfile *profile);
 
-    bool Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap, const ProgressCallback &objectsProgressCallback = nullptr, const ProgressCallback &dumpProgressCallback = nullptr);
+    bool Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap);
 
     std::string GetLastError() const { return _lastError; }
+
+    inline void setDumpExeInfoNotify(const std::function<void(bool)> &f) { _dumpExeInfoNotify = f; }
+    inline void setDumpNamesInfoNotify(const std::function<void(bool)> &f) { _dumpNamesInfoNotify = f; }
+    inline void setDumpObjectsInfoNotify(const std::function<void(bool)> &f) { _dumpObjectsInfoNotify = f; }
+    inline void setOumpOffsetsInfoNotify(const std::function<void(bool)> &f) { _dumpOffsetsInfoNotify = f; }
+
+    inline void setObjectsProgressCallback(const ProgressCallback &f) { _objectsProgressCallback = f; }
+    inline void setDumpProgressCallback(const ProgressCallback &f) { _dumpProgressCallback = f; }
 
 private:
     void DumpExecutableInfo(BufferFmt &logsbufferFmt);

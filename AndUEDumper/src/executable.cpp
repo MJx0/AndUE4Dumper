@@ -150,7 +150,7 @@ int main(int argc, char **args)
         return 1;
     }
 
-    LOGI("gogo: %s", sGamePackage.c_str());
+    LOGI("Game: %s", sGamePackage.c_str());
     LOGI("Process ID: %d", gamePID);
     LOGI("Output directory: %s", sOutDirectory.c_str());
     LOGI("Dump Library: %s", bDumpLib ? "true" : "false");
@@ -174,44 +174,80 @@ int main(int argc, char **args)
         return 1;
     }
 
+    UEDumper uEDumper{};
+
+    uEDumper.setDumpExeInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Executable Info...");
+        }
+    });
+
+    uEDumper.setDumpNamesInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Names Info...");
+        }
+    });
+
+    uEDumper.setDumpObjectsInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Objects Info...");
+        }
+    });
+
+    uEDumper.setOumpOffsetsInfoNotify([](bool bFinished)
+    {
+        if (!bFinished)
+        {
+            LOGI("Dumping Offsets Info...");
+        }
+    });
+
+    uEDumper.setObjectsProgressCallback([](const SimpleProgressBar &progress)
+    {
+        static bool once = false;
+        if (!once)
+        {
+            once = true;
+            LOGI("Gathering UObjects....");
+        };
+        static int lastPercent = -1;
+        int currPercent = progress.getPercentage();
+        if (lastPercent != currPercent)
+        {
+            lastPercent = currPercent;
+            progress.print();
+            if (progress.isComplete())
+                std::cout << "\n";
+        }
+    });
+
+    uEDumper.setDumpProgressCallback([](const SimpleProgressBar &progress)
+    {
+        static bool once = false;
+        if (!once)
+        {
+            once = true;
+            LOGI("Dumping....");
+        };
+        static int lastPercent = -1;
+        int currPercent = progress.getPercentage();
+        if (lastPercent != currPercent)
+        {
+            lastPercent = currPercent;
+            progress.print();
+            if (progress.isComplete())
+                std::cout << "\n";
+        }
+    });
+
     bool dumpSuccess = false;
     std::unordered_map<std::string, BufferFmt> dumpbuffersMap;
-    auto objectsProgressCallback = [](const SimpleProgressBar &progress)
-    {
-        static std::once_flag once{};
-        std::call_once(once, []()
-        {
-            LOGI("Gathering UObjects....");
-        });
-        static int lastPercent = -1;
-        int currPercent = progress.getPercentage();
-        if (lastPercent != currPercent)
-        {
-            lastPercent = currPercent;
-            progress.print();
-            if (progress.isComplete())
-                std::cout << "\n";
-        }
-    };
-    auto dumpProgressCallback = [](const SimpleProgressBar &progress)
-    {
-        static std::once_flag once{};
-        std::call_once(once, []()
-        {
-            LOGI("Dumping....");
-        });
-        static int lastPercent = -1;
-        int currPercent = progress.getPercentage();
-        if (lastPercent != currPercent)
-        {
-            lastPercent = currPercent;
-            progress.print();
-            if (progress.isComplete())
-                std::cout << "\n";
-        }
-    };
-
-    UEDumper uEDumper{};
     auto dmpStart = std::chrono::steady_clock::now();
 
     for (auto &it : UE_Games)
@@ -239,7 +275,7 @@ int main(int argc, char **args)
             LOGI("Initializing Dumper...");
             if (uEDumper.Init(it))
             {
-                dumpSuccess = uEDumper.Dump(&dumpbuffersMap, objectsProgressCallback, dumpProgressCallback);
+                dumpSuccess = uEDumper.Dump(&dumpbuffersMap);
             }
 
             goto done;
