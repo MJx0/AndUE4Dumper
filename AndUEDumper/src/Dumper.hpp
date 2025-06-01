@@ -32,6 +32,8 @@ public:
 
     bool Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap);
 
+    const IGameProfile *GetProfilr() const { return _profile; }
+
     std::string GetLastError() const { return _lastError; }
 
     inline void setDumpExeInfoNotify(const std::function<void(bool)> &f) { _dumpExeInfoNotify = f; }
