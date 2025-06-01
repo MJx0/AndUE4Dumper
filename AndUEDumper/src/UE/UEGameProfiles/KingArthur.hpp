@@ -11,12 +11,12 @@ public:
     bool ArchSupprted() const override
     {
         auto e_machine = GetUnrealEngineELF().header().e_machine;
-        return e_machine == EM_AARCH64 || e_machine == EM_ARM;
+        return e_machine == EM_AARCH64;
     }
 
     std::string GetAppName() const override
     {
-        return "King Arthur";
+        return "King Arthur Legends Rise";
     }
 
     std::vector<std::string> GetAppIDs() const override
