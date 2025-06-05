@@ -266,7 +266,7 @@ namespace UE_DefaultOffsets
             offsets.UProperty.ArrayDim = offsets.UField.Next + sizeof(void *);  // sizeof(UField)
             offsets.UProperty.ElementSize = offsets.UProperty.ArrayDim + sizeof(int32_t);
             offsets.UProperty.PropertyFlags = GetPtrAlignedOf(offsets.UProperty.ElementSize + sizeof(int32_t));
-            offsets.UProperty.Offset_Internal = offsets.UProperty.PropertyFlags + sizeof(int64_t) + (sizeof(int32_t)*2) + offsets.FName.Size;
+            offsets.UProperty.Offset_Internal = offsets.UProperty.PropertyFlags + sizeof(int64_t) + (sizeof(int32_t) * 2) + offsets.FName.Size;
             offsets.UProperty.Size = GetPtrAlignedOf(offsets.UProperty.Offset_Internal + sizeof(int32_t)) + (sizeof(void *) * 4);  // sizeof(UProperty)
         }
         return offsets;
@@ -326,6 +326,21 @@ namespace UE_DefaultOffsets
 
             offsets.FNameEntry.Index = sizeof(void *);
             offsets.FNameEntry.Name = sizeof(void *) + sizeof(int32_t);
+
+            offsets.UStruct.SuperStruct = offsets.UField.Next + (sizeof(void *) * 3);  // sizeof(UField) + sizeof(FStructBaseChain)
+            offsets.UStruct.Children = offsets.UStruct.SuperStruct + sizeof(void *);   // UField*
+            offsets.UStruct.PropertiesSize = offsets.UStruct.Children + sizeof(void *);
+
+            offsets.UFunction.EFunctionFlags = offsets.UStruct.PropertiesSize + (sizeof(int32_t) * 2) + ((sizeof(void *) + sizeof(int32_t) * 2) * 2) + (sizeof(void *) * 4);
+            offsets.UFunction.NumParams = offsets.UFunction.EFunctionFlags + sizeof(int32_t);
+            offsets.UFunction.ParamSize = offsets.UFunction.NumParams + sizeof(int16_t);
+            offsets.UFunction.Func = offsets.UFunction.EFunctionFlags + (sizeof(int32_t) * 4) + (sizeof(void *) * 3);
+
+            offsets.UProperty.ArrayDim = offsets.UField.Next + sizeof(void *);  // sizeof(UField)
+            offsets.UProperty.ElementSize = offsets.UProperty.ArrayDim + sizeof(int32_t);
+            offsets.UProperty.PropertyFlags = GetPtrAlignedOf(offsets.UProperty.ElementSize + sizeof(int32_t));
+            offsets.UProperty.Offset_Internal = offsets.UProperty.PropertyFlags + sizeof(int64_t) + sizeof(int32_t);
+            offsets.UProperty.Size = GetPtrAlignedOf(offsets.UProperty.Offset_Internal + sizeof(int32_t) + offsets.FName.Size) + (sizeof(void *) * 4);  // sizeof(UProperty)
         }
         return offsets;
     }
@@ -356,14 +371,14 @@ namespace UE_DefaultOffsets
             offsets.FNamePool.BlocksBit = 16;
 
             // offset to blocks, usually ios at 0xD0 and android at 0x40
-#ifdef __ANDROID__
+#ifdef __APPLE__
+            offsets.FNamePool.BlocksOff = 0xD0;
+#else
 #ifdef __LP64__
             offsets.FNamePool.BlocksOff = 0x40;
 #else
             offsets.FNamePool.BlocksOff = 0x30;
 #endif
-#else
-            offsets.FNamePool.BlocksOff = 0xD0;
 #endif
 
             offsets.FNamePoolEntry.Header = bWITH_CASE_PRESERVING_NAME ? 4 : 0;  // Offset to name entry header
@@ -472,14 +487,14 @@ namespace UE_DefaultOffsets
             offsets.FNamePool.BlocksBit = 16;
 
             // offset to blocks, usually ios at 0xD0 and android at 0x40
-#ifdef __ANDROID__
+#ifdef __APPLE__
+            offsets.FNamePool.BlocksOff = 0xD0;
+#else
 #ifdef __LP64__
             offsets.FNamePool.BlocksOff = 0x40;
 #else
             offsets.FNamePool.BlocksOff = 0x30;
 #endif
-#else
-            offsets.FNamePool.BlocksOff = 0xD0;
 #endif
 
             offsets.FNamePoolEntry.Header = bWITH_CASE_PRESERVING_NAME ? 4 : 0;  // Offset to name entry header
@@ -581,7 +596,7 @@ std::string UEVars::InitStatusToStr(UEVarsInitStatus s)
     case UEVarsInitStatus::ERROR_INVALID_ELF:
         return "ERROR_INVALID_ELF";
     case UEVarsInitStatus::ARCH_NOT_SUPPORTED:
-        return "UDS_ARCH_NOT_SUPPORTED";
+        return "ERROR_ARCH_NOT_SUPPORTED";
     case UEVarsInitStatus::ERROR_ARCH_MISMATCH:
         return "ERROR_ARCH_MISMATCH";
     case UEVarsInitStatus::ERROR_LIB_INVALID_BASE:

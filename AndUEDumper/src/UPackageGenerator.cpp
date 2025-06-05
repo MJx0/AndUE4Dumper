@@ -105,17 +105,20 @@ void UE_UPackage::GenerateFunction(const UE_UFunction &fn, Function *out)
 void UE_UPackage::GenerateStruct(const UE_UStruct &object, std::vector<Struct> &arr)
 {
     Struct s;
-    s.Size = object.GetSize();
-    if (s.Size == 0)
-    {
-        return;
-    }
-    s.Inherited = 0;
     s.Name = object.GetName();
     s.FullName = object.GetFullName();
 
     s.CppName = "struct ";
     s.CppName += object.GetCppName();
+
+    s.Inherited = 0;
+    s.Size = object.GetSize();
+
+    if (s.Size == 0)
+    {
+        arr.push_back(s);
+        return;
+    }
 
     auto super = object.GetSuper();
     if (super)

@@ -63,6 +63,8 @@ std::vector<IGameProfile *> UE_Games = {
     new HelloNeighborNDProfile(),
 };
 
+#define kUEDUMPER_VERSION "4.0.1"
+
 // increase if needed
 #define WAIT_TIME_SEC 20
 
@@ -76,7 +78,7 @@ extern "C" void callMe(bool bDumpLib)
 
 __attribute__((constructor)) void onload()
 {
-    LOGI("~: UEDump3r loaded :~");
+    LOGI("Using UE Dumper %s", kUEDUMPER_VERSION);
     // callMe(true); // dump lib from memory
     callMe(false);
 }

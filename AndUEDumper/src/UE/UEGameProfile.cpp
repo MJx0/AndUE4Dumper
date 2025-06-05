@@ -7,33 +7,29 @@ using namespace UEMemory;
 
 UEVarsInitStatus IGameProfile::InitUEVars()
 {
-    auto ue_elf = GetUnrealEngineELF();
-    if (!ue_elf.isValid())
+    bool is32Bit = KittyMemoryEx::getMapsEndWith(kMgr.processID(), "/linker64").empty();
+    if (is32Bit)
     {
-        LOGE("Couldn't find a valid UE ELF in target process maps.");
-        return UEVarsInitStatus::ERROR_LIB_NOT_FOUND;
-    }
-
-    switch (ue_elf.header().e_ident[4])  // EI_CLASS
-    {
-    case 1:  // ELFCLASS32
         if (sizeof(void *) != 4)
         {
             LOGE("Dumper is 64bit while target process is 32bit. Please use the correct architecture.");
             return UEVarsInitStatus::ERROR_ARCH_MISMATCH;
         }
-        break;
-
-    case 2:  // ELFCLASS64
+    }
+    else
+    {
         if (sizeof(void *) != 8)
         {
             LOGE("Dumper is 32bit while target process is 64bit. Please use the correct architecture.");
             return UEVarsInitStatus::ERROR_ARCH_MISMATCH;
         }
-        break;
+    }
 
-    default:
-        break;
+    auto ue_elf = GetUnrealEngineELF();
+    if (!ue_elf.isValid())
+    {
+        LOGE("Couldn't find a valid UE ELF in target process maps.");
+        return UEVarsInitStatus::ERROR_LIB_NOT_FOUND;
     }
 
     if (!ArchSupprted())
@@ -99,12 +95,14 @@ uint8_t *IGameProfile::GetNameEntry(int32_t id) const
 
     if (!IsUsingFNamePool())
     {
+        uintptr_t gNames = vm_rpm_ptr<uintptr_t>((void *)namesPtr);
+
         const int32_t ElementsPerChunk = 16384;
         const int32_t ChunkIndex = id / ElementsPerChunk;
         const int32_t WithinChunkIndex = id % ElementsPerChunk;
 
         // FNameEntry**
-        uint8_t *FNameEntryArray = vm_rpm_ptr<uint8_t *>((void *)(namesPtr + ChunkIndex * sizeof(uintptr_t)));
+        uint8_t *FNameEntryArray = vm_rpm_ptr<uint8_t *>((void *)(gNames + ChunkIndex * sizeof(uintptr_t)));
         if (!FNameEntryArray)
             return nullptr;
 

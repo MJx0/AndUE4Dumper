@@ -67,6 +67,8 @@ std::vector<IGameProfile *> UE_Games = {
     new HelloNeighborNDProfile(),
 };
 
+#define kUEDUMPER_VERSION "4.0.1"
+
 bool bNeededHelp = false;
 
 int main(int argc, char **args)
@@ -74,6 +76,8 @@ int main(int argc, char **args)
     setbuf(stdout, nullptr);
     setbuf(stderr, nullptr);
     setbuf(stdin, nullptr);
+
+    LOGI("Using UE Dumper %s", kUEDUMPER_VERSION);
 
     KittyCmdln cmdline(argc, args);
 
