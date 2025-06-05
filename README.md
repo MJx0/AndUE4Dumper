@@ -17,6 +17,7 @@ project.
 
 ## Currently Supported Games
 
+* Ark Ultimate
 * Arena Breakout
 * Black Clover M
 * Delta Force
@@ -39,6 +40,7 @@ project.
 * Case 2 Animatronics
 * Hello Neighbor
 * Hello Neighbor Nicky's Diaries
+* Special Forces Group 2
 
 ## Library Usage
 

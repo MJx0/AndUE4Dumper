@@ -32,7 +32,7 @@
 #include "UE/UEGameProfiles/RooftopsParkour.hpp"
 #include "UE/UEGameProfiles/BabyYellow.hpp"
 #include "UE/UEGameProfiles/TowerFantasy.hpp"
-#include "UE/UEGameProfiles/SoulBlade.hpp"
+#include "UE/UEGameProfiles/BladeSoul.hpp"
 #include "UE/UEGameProfiles/Lineage2.hpp"
 #include "UE/UEGameProfiles/NightCrows.hpp"
 #include "UE/UEGameProfiles/Case2.hpp"
@@ -40,6 +40,8 @@
 #include "UE/UEGameProfiles/Century.hpp"
 #include "UE/UEGameProfiles/HelloNeighbor.hpp"
 #include "UE/UEGameProfiles/HelloNeighborND.hpp"
+#include "UE/UEGameProfiles/SFG2.hpp"
+#include "UE/UEGameProfiles/ArkUltimate.hpp"
 
 std::vector<IGameProfile *> UE_Games = {
     new PESProfile(),
@@ -57,7 +59,7 @@ std::vector<IGameProfile *> UE_Games = {
     new RooftopParkourProfile(),
     new BabyYellowProfile(),
     new TowerFantasyProfile(),
-    new SoulBladeProfile(),
+    new BladeSoulProfile(),
     new Lineage2Profile(),
     new Case2Profile(),
     new CenturyProfile(),
@@ -65,6 +67,8 @@ std::vector<IGameProfile *> UE_Games = {
     new NightCrowsProfile(),
     new HelloNeighborProfile(),
     new HelloNeighborNDProfile(),
+    new SFG2Profile(),
+    new ArkUltimateProfile(),
 };
 
 #define kUEDUMPER_VERSION "4.0.1"
