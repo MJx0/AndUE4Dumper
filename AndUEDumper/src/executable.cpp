@@ -9,13 +9,14 @@
 #include <sys/types.h>
 #include <thread>
 
-#include "UE/UEGameProfile.hpp"
 #include "Utils/KittyCmdln.hpp"
 #include "Utils/Logger.hpp"
 #include "Utils/ProgressUtils.hpp"
 
-#include "UE/UEMemory.hpp"
 #include "Dumper.hpp"
+
+#include "UE/UEMemory.hpp"
+#include "UE/UEGameProfile.hpp"
 
 #include "UE/UEGameProfiles/ArenaBreakout.hpp"
 #include "UE/UEGameProfiles/BlackClover.hpp"
