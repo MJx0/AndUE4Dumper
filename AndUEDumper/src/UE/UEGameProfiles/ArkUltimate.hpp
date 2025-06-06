@@ -113,7 +113,7 @@ public:
 
     UE_Offsets *GetOffsets() const override
     {
-        static UE_Offsets offsets = UE_DefaultOffsets::UE5_00_02(isUsingCasePreservingName(), isUsingOutlineNumberName());
+        static UE_Offsets offsets = UE_DefaultOffsets::UE4_25_27(isUsingCasePreservingName());
         return &offsets;
     }
 };
