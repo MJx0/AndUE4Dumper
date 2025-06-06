@@ -31,7 +31,7 @@ project.
 * The Baby In Yellow
 * Torchlight: Infinite
 * Wuthering Waves
-* Soul Blade Revolution
+* Blade Soul Revolution
 * Lineage 2 Revolution
 * eFootball (PES)
 * King Arthur Legends Rise
