@@ -95,7 +95,11 @@ uint8_t *IGameProfile::GetNameEntry(int32_t id) const
 
     if (!IsUsingFNamePool())
     {
-        uintptr_t gNames = vm_rpm_ptr<uintptr_t>((void *)namesPtr);
+        static uintptr_t gNames = 0;
+        if (gNames == 0)
+        {
+            gNames = vm_rpm_ptr<uintptr_t>((void *)namesPtr);
+        }
 
         const int32_t ElementsPerChunk = 16384;
         const int32_t ChunkIndex = id / ElementsPerChunk;
