@@ -59,7 +59,7 @@ public:
         }
 
         uintptr_t adrl = Arm64::Decode_ADRP_ADD(GNamesInit);
-        return adrl ? vm_rpm_ptr<uintptr_t>((void *)(adrl + GetPtrAlignedOf(sizeof(bool)))) : 0;
+        return adrl ? (adrl + GetPtrAlignedOf(sizeof(bool))) : 0;
     }
 
     UE_Offsets *GetOffsets() const override
