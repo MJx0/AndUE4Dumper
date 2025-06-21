@@ -39,7 +39,7 @@ public:
     inline void setDumpExeInfoNotify(const std::function<void(bool)> &f) { _dumpExeInfoNotify = f; }
     inline void setDumpNamesInfoNotify(const std::function<void(bool)> &f) { _dumpNamesInfoNotify = f; }
     inline void setDumpObjectsInfoNotify(const std::function<void(bool)> &f) { _dumpObjectsInfoNotify = f; }
-    inline void setOumpOffsetsInfoNotify(const std::function<void(bool)> &f) { _dumpOffsetsInfoNotify = f; }
+    inline void setDumpOffsetsInfoNotify(const std::function<void(bool)> &f) { _dumpOffsetsInfoNotify = f; }
 
     inline void setObjectsProgressCallback(const ProgressCallback &f) { _objectsProgressCallback = f; }
     inline void setDumpProgressCallback(const ProgressCallback &f) { _dumpProgressCallback = f; }

@@ -213,7 +213,7 @@ int main(int argc, char **args)
         }
     });
 
-    uEDumper.setOumpOffsetsInfoNotify([](bool bFinished)
+    uEDumper.setDumpOffsetsInfoNotify([](bool bFinished)
     {
         if (!bFinished)
         {
