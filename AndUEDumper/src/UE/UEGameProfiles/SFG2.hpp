@@ -10,7 +10,7 @@ public:
 
     bool ArchSupprted() const override
     {
-        auto e_machine = GetUnrealEngineELF().header().e_machine;
+        auto e_machine = GetUnrealELF().header().e_machine;
         return e_machine == EM_ARM || e_machine == EM_AARCH64;
     }
 
@@ -41,7 +41,7 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        uintptr_t guobjectarray = GetUnrealEngineELF().findSymbol("GUObjectArray");
+        uintptr_t guobjectarray = GetUnrealELF().findSymbol("GUObjectArray");
         if (guobjectarray == 0)
         {
             LOGE("Failed to find GUObjectArray symbol.");
@@ -52,7 +52,7 @@ public:
 
     uintptr_t GetNamesPtr() const override
     {
-        uintptr_t GFNameTableForDebuggerVisualizers_MT = GetUnrealEngineELF().findSymbol("GFNameTableForDebuggerVisualizers_MT");
+        uintptr_t GFNameTableForDebuggerVisualizers_MT = GetUnrealELF().findSymbol("GFNameTableForDebuggerVisualizers_MT");
         if (GFNameTableForDebuggerVisualizers_MT == 0)
         {
             LOGE("Failed to find GFNameTableForDebuggerVisualizers_MT symbol.");

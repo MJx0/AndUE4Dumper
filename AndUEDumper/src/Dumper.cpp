@@ -98,7 +98,7 @@ bool UEDumper::Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap)
     BufferFmt &aioBufferFmt = outBuffersMap->at("AIOHeader.hpp");
     DumpAIOHeader(logsBufferFmt, aioBufferFmt, packages, _dumpProgressCallback);
 
-    dumper_jf_ns::base_address = _profile->GetUnrealEngineELF().base();
+    dumper_jf_ns::base_address = _profile->GetUnrealELF().base();
     if (dumper_jf_ns::jsonFunctions.size())
     {
         logsBufferFmt.append("Generating script json...\nFunctions: {}\n", dumper_jf_ns::jsonFunctions.size());
@@ -121,7 +121,7 @@ bool UEDumper::Dump(std::unordered_map<std::string, BufferFmt> *outBuffersMap)
 
 void UEDumper::DumpExecutableInfo(BufferFmt &logsBufferFmt)
 {
-    auto ue_elf = _profile->GetUnrealEngineELF();
+    auto ue_elf = _profile->GetUnrealELF();
     logsBufferFmt.append("e_machine: 0x{:X}\n", ue_elf.header().e_machine);
     logsBufferFmt.append("Library: {}\n", ue_elf.filePath().c_str());
     logsBufferFmt.append("BaseAddress: 0x{:X}\n", ue_elf.base());
@@ -188,7 +188,7 @@ void UEDumper::DumpOffsetsInfo(BufferFmt &logsBufferFmt, BufferFmt &offsetsBuffe
     uintptr_t UEnginePtr = 0, UWorldPtr = 0;
     if (((UE_UObject)UEWrappers::GetObjects()->GetObjectPtr(1)).GetIndex() == 1)
     {
-        auto ueSegs = _profile->GetUnrealEngineELF().segments();
+        auto ueSegs = _profile->GetUnrealELF().segments();
 
         UE_UClass UEngineClass = UEWrappers::GetObjects()->FindObject("Class Engine.Engine").Cast<UE_UClass>();
         UE_UClass UWorldClass = UEWrappers::GetObjects()->FindObject("Class Engine.World").Cast<UE_UClass>();

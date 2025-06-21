@@ -34,7 +34,7 @@ public:
     UEVarsInitStatus InitUEVars();
     const UEVars *GetUEVars() const { return &_UEVars; }
 
-    virtual ElfScanner GetUnrealEngineELF() const;
+    virtual ElfScanner GetUnrealELF() const;
 
     // arch support check
     virtual bool ArchSupprted() const = 0;

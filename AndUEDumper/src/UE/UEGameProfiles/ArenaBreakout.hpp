@@ -10,7 +10,7 @@ public:
 
     bool ArchSupprted() const override
     {
-        auto e_machine = GetUnrealEngineELF().header().e_machine;
+        auto e_machine = GetUnrealELF().header().e_machine;
         // only arm64
         return e_machine == EM_AARCH64;
     }

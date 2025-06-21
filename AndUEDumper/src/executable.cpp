@@ -72,7 +72,7 @@ std::vector<IGameProfile *> UE_Games = {
     new ArkUltimateProfile(),
 };
 
-#define kUEDUMPER_VERSION "4.0.1"
+#define kUEDUMPER_VERSION "4.1.0"
 
 bool bNeededHelp = false;
 
@@ -272,16 +272,21 @@ int main(int argc, char **args)
 
             if (bDumpLib)
             {
-                auto ue_elf = it->GetUnrealEngineELF();
+                auto ue_elf = it->GetUnrealELF();
                 if (!ue_elf.isValid())
                 {
                     LOGE("Couldn't find a valid UE ELF in target process maps.");
                     return 1;
                 }
 
-                LOGI("Dumping libUE.so from memory...");
-                std::string libdumpPath = KittyUtils::String::Fmt("%s/libUE_%p-%p.so", sDumpGameDir.c_str(), ue_elf.base(), ue_elf.end());
-                LOGI("Dumping lib: %s.", kMgr.dumpMemELF(ue_elf.base(), libdumpPath) ? "success" : "failed");
+                LOGI("Dumping unreal lib from memory...");
+                std::string libDumpPath = KittyUtils::String::Fmt("%s/libUE_%p-%p.so", sDumpGameDir.c_str(), ue_elf.base(), ue_elf.end());
+                bool res = kMgr.dumpMemELF(ue_elf, libDumpPath);
+                LOGI("Dumping lib: %s.",  res ? "success" : "failed");
+                if (res)
+                {
+                    LOGI("%s", libDumpPath.c_str());
+                }
                 LOGI("==========================");
             }
 

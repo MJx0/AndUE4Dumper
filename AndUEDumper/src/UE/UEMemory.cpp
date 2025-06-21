@@ -208,7 +208,6 @@ namespace IOUtils
     {
         DIR *dp;
         struct dirent *rd;
-        char buff[512] = {0};
 
         dp = opendir(directory.c_str());
         if (!dp)
@@ -219,11 +218,11 @@ namespace IOUtils
             if (!strcmp(rd->d_name, ".") || !strcmp(rd->d_name, ".."))
                 continue;
 
-            sprintf(buff, "%s/%s", directory.c_str(), rd->d_name);
-            if (path_is_directory(buff))
-                delete_directory(buff);
+            std::string path = directory + '/' + rd->d_name;
+            if (path_is_directory(path.c_str()))
+                delete_directory(path.c_str());
             else
-                unlink(buff);
+                unlink(path.c_str());
         }
 
         closedir(dp);

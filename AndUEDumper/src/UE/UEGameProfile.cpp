@@ -25,14 +25,14 @@ UEVarsInitStatus IGameProfile::InitUEVars()
         }
     }
 
-    auto ue_elf = GetUnrealEngineELF();
+    auto ue_elf = GetUnrealELF();
     if (!ue_elf.isValid())
     {
         LOGE("Couldn't find a valid UE ELF in target process maps.");
         return UEVarsInitStatus::ERROR_LIB_NOT_FOUND;
     }
 
-    if (!ArchSupprted())
+    if (!ArchSupprted() && !ue_elf.isHeaderless())
     {
         LOGE("Architecture ( 0x%x ) is not supported for this game.", ue_elf.header().e_machine);
         return UEVarsInitStatus::ARCH_NOT_SUPPORTED;
@@ -198,7 +198,7 @@ std::string IGameProfile::GetNameByID(int32_t id) const
     return GetNameEntryString(GetNameEntry(id));
 }
 
-ElfScanner IGameProfile::GetUnrealEngineELF() const
+ElfScanner IGameProfile::GetUnrealELF() const
 {
     static const std::vector<std::string> cUELibNames = {"libUE4.so",
                                                          "libUnreal.so"};
@@ -209,20 +209,34 @@ ElfScanner IGameProfile::GetUnrealEngineELF() const
 
     for (const auto &lib : cUELibNames)
     {
-        ue_elf = kMgr.getMemElf(lib);
+        ue_elf = kMgr.findMemElf(lib);
         if (ue_elf.isValid())
             return ue_elf;
+    }
 
-        for (auto &it : KittyMemoryEx::getAllMaps(kMgr.processID()))
+    // split config
+    const auto maps = KittyMemoryEx::getAllMaps(kMgr.processID());
+    for (const auto &lib : cUELibNames)
+    {
+        for (auto &it : maps)
         {
             if (KittyUtils::String::Contains(it.pathname, kMgr.processName()) &&
                 KittyUtils::String::EndsWith(it.pathname, ".apk"))
             {
-                ue_elf = kMgr.getMemElfInZip(it.pathname, lib);
+                ue_elf = kMgr.findMemElfInZip(it.pathname, lib);
                 if (ue_elf.isValid())
                     return ue_elf;
             }
         }
+    }
+
+    // last resort, linker solist
+    // some games like farlight and pubg remove ELF header from lib
+    for (const auto &lib : cUELibNames)
+    {
+        ue_elf = kMgr.findMemElfFromLinker(lib);
+        if (ue_elf.isValid())
+            return ue_elf;
     }
 
     return ue_elf;
@@ -234,7 +248,7 @@ bool IGameProfile::isEmulator() const
         !KittyMemoryEx::getMapsContain(kMgr.processID(), "/arm64/nb/").empty())
         return true;
 
-    for (auto &it : GetUnrealEngineELF().segments())
+    for (auto &it : GetUnrealELF().segments())
         if (it.executable)
             return false;
 
@@ -246,19 +260,17 @@ uintptr_t IGameProfile::findIdaPattern(PATTERN_MAP_TYPE map_type,
                                        const int step,
                                        uint32_t skip_result) const
 {
-    ElfScanner ue_elf = GetUnrealEngineELF();
+    ElfScanner ue_elf = GetUnrealELF();
     std::vector<KittyMemoryEx::ProcMap> search_segments;
-    bool hasBSS = ue_elf.bss() > 0;
+    bool hasBSS = ue_elf.bssSegments().size() > 0;
 
     if (map_type == PATTERN_MAP_TYPE::BSS)
     {
         if (!hasBSS)
             return 0;
 
-        for (auto &it : ue_elf.segments())
-            if (it.startAddress >= ue_elf.bss() &&
-                it.endAddress <= (ue_elf.bss() + ue_elf.bssSize()))
-                search_segments.push_back(it);
+        for (auto &it : ue_elf.bssSegments())
+            search_segments.push_back(it);
     }
     else
     {
@@ -270,10 +282,6 @@ uintptr_t IGameProfile::findIdaPattern(PATTERN_MAP_TYPE map_type,
             if (map_type == PATTERN_MAP_TYPE::ANY_X && !it.executable)
                 continue;
             else if (map_type == PATTERN_MAP_TYPE::ANY_W && !it.writeable)
-                continue;
-
-            if (hasBSS && it.startAddress >= ue_elf.bss() &&
-                it.endAddress <= (ue_elf.bss() + ue_elf.bssSize()))
                 continue;
 
             search_segments.push_back(it);

@@ -10,7 +10,7 @@ public:
 
     bool ArchSupprted() const override
     {
-        auto e_machine = GetUnrealEngineELF().header().e_machine;
+        auto e_machine = GetUnrealELF().header().e_machine;
         return e_machine == EM_AARCH64 || e_machine == EM_ARM;
     }
 
@@ -40,7 +40,7 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        uintptr_t guobjectarray = GetUnrealEngineELF().findSymbol("GUObjectArray");
+        uintptr_t guobjectarray = GetUnrealELF().findSymbol("GUObjectArray");
         if (guobjectarray == 0)
         {
             LOGE("Failed to find GUObjectArray symbol.");
@@ -51,7 +51,7 @@ public:
 
     uintptr_t GetNamesPtr() const override
     {
-        uintptr_t GNamesInit = GetUnrealEngineELF().findSymbol("_ZN5FName16GetIsInitializedEv");
+        uintptr_t GNamesInit = GetUnrealELF().findSymbol("_ZN5FName16GetIsInitializedEv");
         if (GNamesInit == 0)
         {
             LOGE("Failed to find _ZN5FName16GetIsInitializedEv symbol.");

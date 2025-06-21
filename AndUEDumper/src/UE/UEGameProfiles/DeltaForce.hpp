@@ -10,7 +10,7 @@ public:
 
     bool ArchSupprted() const override
     {
-        auto e_machine = GetUnrealEngineELF().header().e_machine;
+        auto e_machine = GetUnrealELF().header().e_machine;
         return e_machine == EM_AARCH64;
     }
 
@@ -21,7 +21,7 @@ public:
 
     std::vector<std::string> GetAppIDs() const override
     {
-        return {"com.proxima.dfm"};
+        return {"com.proxima.dfm", "com.garena.game.df"};
     }
 
     bool isUsingCasePreservingName() const override

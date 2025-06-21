@@ -10,7 +10,7 @@ public:
 
     bool ArchSupprted() const override
     {
-        auto e_machine = GetUnrealEngineELF().header().e_machine;
+        auto e_machine = GetUnrealELF().header().e_machine;
         return e_machine == EM_AARCH64;
     }
 
@@ -42,7 +42,6 @@ public:
     uintptr_t GetGUObjectArrayPtr() const override
     {
         std::vector<std::pair<std::string, int>> idaPatterns = {
-            {"91 E1 03 ? AA E0 03 08 AA E2 03 1F 2A", -7},
             {"B4 21 0C 40 B9 ? ? ? ? ? ? ? 91", 5},
             {"9F E5 00 ? 00 E3 FF ? 40 E3 ? ? A0 E1", -2},
             {"96 df 02 17 ? ? ? ? 54 ? ? ? ? ? ? ? 91 e1 03 13 aa", 9},
@@ -106,7 +105,7 @@ public:
         if (!once)
         {
             once = true;
-            offsets.FUObjectArray.ObjObjects += sizeof(void *);
+            offsets.FUObjectArray.ObjObjects += sizeof(void*);
         }
 
         return &offsets;

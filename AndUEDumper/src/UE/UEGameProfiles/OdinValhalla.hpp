@@ -10,7 +10,7 @@ public:
 
     bool ArchSupprted() const override
     {
-        auto e_machine = GetUnrealEngineELF().header().e_machine;
+        auto e_machine = GetUnrealELF().header().e_machine;
         return e_machine == EM_AARCH64 || e_machine == EM_ARM;
     }
 
@@ -41,7 +41,7 @@ public:
 
     uintptr_t GetGUObjectArrayPtr() const override
     {
-        uintptr_t guobjectarray = GetUnrealEngineELF().findSymbol("GUObjectArray");
+        uintptr_t guobjectarray = GetUnrealELF().findSymbol("GUObjectArray");
         if (guobjectarray != 0)
             return guobjectarray;
 
@@ -71,7 +71,7 @@ public:
     uintptr_t GetNamesPtr() const override
     {
         // GNameBlocksDebug = &NamePoolData + Blocks offset
-        uintptr_t blocks_p = GetUnrealEngineELF().findSymbol("GNameBlocksDebug");
+        uintptr_t blocks_p = GetUnrealELF().findSymbol("GNameBlocksDebug");
         if (blocks_p != 0)
         {
             blocks_p = vm_rpm_ptr<uintptr_t>((void *)blocks_p);
