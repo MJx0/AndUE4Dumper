@@ -43,6 +43,7 @@
 #include "UE/UEGameProfiles/HelloNeighborND.hpp"
 #include "UE/UEGameProfiles/SFG2.hpp"
 #include "UE/UEGameProfiles/ArkUltimate.hpp"
+#include "UE/UEGameProfiles/Auroria.hpp"
 
 std::vector<IGameProfile *> UE_Games = {
     new PESProfile(),
@@ -70,6 +71,7 @@ std::vector<IGameProfile *> UE_Games = {
     new HelloNeighborNDProfile(),
     new SFG2Profile(),
     new ArkUltimateProfile(),
+    new AuroriaProfile(),
 };
 
 #define kUEDUMPER_VERSION "4.1.0"
