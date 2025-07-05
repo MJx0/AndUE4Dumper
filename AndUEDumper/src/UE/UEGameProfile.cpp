@@ -41,7 +41,7 @@ UEVarsInitStatus IGameProfile::InitUEVars()
         }
         else
         {
-            LOGW("UE ELF Header might !");
+            LOGW("UE ELF Header might have been removed or modified!");
         }
     }
 
