@@ -32,16 +32,23 @@ UEVarsInitStatus IGameProfile::InitUEVars()
         return UEVarsInitStatus::ERROR_LIB_NOT_FOUND;
     }
 
-    if (!ArchSupprted() && !ue_elf.isHeaderless())
+    if (!ArchSupprted())
     {
-        LOGE("Architecture ( 0x%x ) is not supported for this game.", ue_elf.header().e_machine);
-        return UEVarsInitStatus::ARCH_NOT_SUPPORTED;
+        if (GetUnrealELF().header().e_machine > 0 && !ue_elf.isHeaderless())
+        {
+            LOGE("Architecture ( 0x%x ) is not supported for this game.", ue_elf.header().e_machine);
+            return UEVarsInitStatus::ARCH_NOT_SUPPORTED;
+        }
+        else
+        {
+            LOGW("UE ELF Header might !");
+        }
     }
 
-    PtrValidator.setPID(kMgr.processID());
-    PtrValidator.setUseCache(true);
-    PtrValidator.refreshRegionCache();
-    if (PtrValidator.regions().empty())
+    kPtrValidator.setPID(kMgr.processID());
+    kPtrValidator.setUseCache(true);
+    kPtrValidator.refreshRegionCache();
+    if (kPtrValidator.regions().empty())
         return UEVarsInitStatus::ERROR_INIT_PTR_VALIDATOR;
 
     _UEVars.BaseAddress = ue_elf.base();
@@ -55,12 +62,12 @@ UEVarsInitStatus IGameProfile::InitUEVars()
     _UEVars.NamesPtr = GetNamesPtr();
     if (IsUsingFNamePool())
     {
-        if (!PtrValidator.isPtrReadable(_UEVars.NamesPtr))
+        if (!kPtrValidator.isPtrReadable(_UEVars.NamesPtr))
             return UEVarsInitStatus::ERROR_INIT_NAMEPOOL;
     }
     else
     {
-        if (!PtrValidator.isPtrReadable(_UEVars.NamesPtr))
+        if (!kPtrValidator.isPtrReadable(_UEVars.NamesPtr))
             return UEVarsInitStatus::ERROR_INIT_GNAMES;
     }
 
@@ -70,7 +77,7 @@ UEVarsInitStatus IGameProfile::InitUEVars()
     };
 
     _UEVars.GUObjectsArrayPtr = GetGUObjectArrayPtr();
-    if (!PtrValidator.isPtrReadable(_UEVars.GUObjectsArrayPtr))
+    if (!kPtrValidator.isPtrReadable(_UEVars.GUObjectsArrayPtr))
         return UEVarsInitStatus::ERROR_INIT_GUOBJECTARRAY;
 
     _UEVars.ObjObjectsPtr = _UEVars.GUObjectsArrayPtr + pOffsets->FUObjectArray.ObjObjects;

@@ -1352,11 +1352,11 @@ uintptr_t UE_FProperty::FindSubFPropertyBaseOffset() const
 {
     uintptr_t offset = 0;
     uintptr_t temp = 0;
-    if (vm_rpm_ptr(object + UEWrappers::GetOffsets()->FProperty.Size, &temp, sizeof(uintptr_t)) && PtrValidator.isPtrReadable(temp))
+    if (vm_rpm_ptr(object + UEWrappers::GetOffsets()->FProperty.Size, &temp, sizeof(uintptr_t)) && kPtrValidator.isPtrReadable(temp))
     {
         offset = UEWrappers::GetOffsets()->FProperty.Size;
     }
-    else if (vm_rpm_ptr(object + UEWrappers::GetOffsets()->FProperty.Size + sizeof(void *), &temp, sizeof(uintptr_t)) && PtrValidator.isPtrReadable(temp))
+    else if (vm_rpm_ptr(object + UEWrappers::GetOffsets()->FProperty.Size + sizeof(void *), &temp, sizeof(uintptr_t)) && kPtrValidator.isPtrReadable(temp))
     {
         offset = UEWrappers::GetOffsets()->FProperty.Size + sizeof(void *);
     }

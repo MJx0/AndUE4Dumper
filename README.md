@@ -19,6 +19,7 @@ project.
 
 * Ark Ultimate
 * Arena Breakout
+* Auroria
 * Black Clover M
 * Delta Force
 * Dislyte
@@ -33,6 +34,7 @@ project.
 * Wuthering Waves
 * Blade Soul Revolution
 * Lineage 2 Revolution
+* Lineage W
 * eFootball (PES)
 * King Arthur Legends Rise
 * Night Crows

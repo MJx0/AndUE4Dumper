@@ -41,6 +41,7 @@
 #include "UE/UEGameProfiles/SFG2.hpp"
 #include "UE/UEGameProfiles/ArkUltimate.hpp"
 #include "UE/UEGameProfiles/Auroria.hpp"
+#include "UE/UEGameProfiles/LineageW.hpp"
 
 std::vector<IGameProfile *> UE_Games = {
     new PESProfile(),
@@ -69,9 +70,10 @@ std::vector<IGameProfile *> UE_Games = {
     new SFG2Profile(),
     new ArkUltimateProfile(),
     new AuroriaProfile(),
+    new LineageWProfile(),
 };
 
-#define kUEDUMPER_VERSION "4.1.0"
+#define kUEDUMPER_VERSION "4.1.1"
 
 // increase if needed
 #define WAIT_TIME_SEC 20

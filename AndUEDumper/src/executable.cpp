@@ -44,6 +44,7 @@
 #include "UE/UEGameProfiles/SFG2.hpp"
 #include "UE/UEGameProfiles/ArkUltimate.hpp"
 #include "UE/UEGameProfiles/Auroria.hpp"
+#include "UE/UEGameProfiles/LineageW.hpp"
 
 std::vector<IGameProfile *> UE_Games = {
     new PESProfile(),
@@ -72,9 +73,10 @@ std::vector<IGameProfile *> UE_Games = {
     new SFG2Profile(),
     new ArkUltimateProfile(),
     new AuroriaProfile(),
+    new LineageWProfile(),
 };
 
-#define kUEDUMPER_VERSION "4.1.0"
+#define kUEDUMPER_VERSION "4.1.1"
 
 bool bNeededHelp = false;
 
@@ -158,11 +160,34 @@ int main(int argc, char **args)
         sGamePackage = UE_Games[gameIndexMap[gameNumber].first]->GetAppIDs()[gameIndexMap[gameNumber].second];
     }
 
-    pid_t gamePID = KittyMemoryEx::getProcessID(sGamePackage);
-    if (gamePID < 1)
+    auto gamePIDs = KittyMemoryEx::getPIDsOf(sGamePackage);
+    if (gamePIDs.empty())
     {
         LOGE("Couldn't find \"%s\" in the running processes list.", sGamePackage.c_str());
         return 1;
+    }
+
+    pid_t gamePID = 0;
+    if (gamePIDs.size() > 1)
+    {
+        std::cout << "Found multiple processes with same package name, Choose one: " << std::endl;
+        for (size_t i = 0; i < gamePIDs.size(); i++)
+        {
+            std::cout << "\t" << i << ": PID(" << gamePIDs[i] << ")" << std::endl;
+        }
+        std::cout << "Process number: ";
+        int gamePidIndex = 0;
+        scanf("%d", &gamePidIndex);
+        if (gamePidIndex < 0 || gamePidIndex >= gamePIDs.size())
+        {
+            LOGE("Selected PID index is out of range.");
+            return 1;
+        }
+        gamePID = gamePIDs[gamePidIndex];
+    }
+    else
+    {
+        gamePID = gamePIDs.front();
     }
 
     LOGI("Game: %s", sGamePackage.c_str());

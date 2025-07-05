@@ -3,11 +3,11 @@
 namespace UEMemory
 {
     KittyMemoryMgr kMgr{};
-    KittyPtrValidator PtrValidator;
+    KittyPtrValidator kPtrValidator;
 
     bool vm_rpm_ptr(const void *address, void *result, size_t len)
     {
-        if (!PtrValidator.isPtrReadable(address))
+        if (!kPtrValidator.isPtrReadable(address))
             return false;
 
         return kMgr.readMem(uintptr_t(address), result, len) == len;
